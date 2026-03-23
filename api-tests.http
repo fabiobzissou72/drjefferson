@@ -1,0 +1,161 @@
+# ============================================
+# Dr. Jefferson API - Collection de Testes
+# Importe no Postman ou Insomnia
+# ============================================
+
+@baseUrl = http://localhost:3000/api
+@apiKey = seu-api-token-aqui
+@token = Bearer seu-jwt-token-aqui
+
+### ============================================
+### 1. GERAR TOKEN
+### ============================================
+POST {{baseUrl}}/auth/token
+Content-Type: application/json
+
+{
+  "apiKey": "{{apiKey}}"
+}
+
+### ============================================
+### 2. CRIAR PACIENTE
+### ============================================
+POST {{baseUrl}}/patients
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Carlos Eduardo Silva",
+  "cpf": "111.222.333-44",
+  "phone": "(11) 99999-8888",
+  "email": "carlos@email.com",
+  "birthDate": "1990-05-20",
+  "notes": "Paciente novo, primeira consulta"
+}
+
+### ============================================
+### 3. LISTAR PACIENTES
+### ============================================
+GET {{baseUrl}}/patients
+Authorization: {{token}}
+
+### ============================================
+### 4. LISTAR PACIENTES (com busca)
+### ============================================
+GET {{baseUrl}}/patients?search=Maria&page=1&pageSize=10
+Authorization: {{token}}
+
+### ============================================
+### 5. BUSCAR PACIENTE POR ID
+### ============================================
+GET {{baseUrl}}/patients/[ID-DO-PACIENTE]
+Authorization: {{token}}
+
+### ============================================
+### 6. ATUALIZAR PACIENTE
+### ============================================
+PUT {{baseUrl}}/patients/[ID-DO-PACIENTE]
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "phone": "(11) 98888-7777",
+  "notes": "Atualizado em 2024"
+}
+
+### ============================================
+### 7. DELETAR PACIENTE
+### ============================================
+DELETE {{baseUrl}}/patients/[ID-DO-PACIENTE]
+Authorization: {{token}}
+
+### ============================================
+### 8. CRIAR AGENDAMENTO
+### ============================================
+POST {{baseUrl}}/appointments
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "patientId": "[ID-DO-PACIENTE]",
+  "date": "2024-12-20",
+  "time": "14:30",
+  "type": "return",
+  "notes": "Retorno de exame"
+}
+
+### ============================================
+### 9. LISTAR AGENDAMENTOS
+### ============================================
+GET {{baseUrl}}/appointments
+Authorization: {{token}}
+
+### ============================================
+### 10. LISTAR AGENDAMENTOS POR DATA
+### ============================================
+GET {{baseUrl}}/appointments?date=2024-12-20
+Authorization: {{token}}
+
+### ============================================
+### 11. LISTAR AGENDAMENTOS COM PACIENTE
+### ============================================
+GET {{baseUrl}}/appointments?includePatient=true
+Authorization: {{token}}
+
+### ============================================
+### 12. BUSCAR AGENDAMENTO POR ID
+### ============================================
+GET {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]?includePatient=true
+Authorization: {{token}}
+
+### ============================================
+### 13. REAGENDAR (ATUALIZAR)
+### ============================================
+PUT {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "date": "2024-12-22",
+  "time": "10:00",
+  "notes": "Reagendado para nova data"
+}
+
+### ============================================
+### 14. CONFIRMAR AGENDAMENTO
+### ============================================
+PATCH {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]/status
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "confirmed"
+}
+
+### ============================================
+### 15. MARCAR COMO COMPARECEU
+### ============================================
+PATCH {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]/status
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "attended"
+}
+
+### ============================================
+### 16. MARCAR COMO FALTOU
+### ============================================
+PATCH {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]/status
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "missed"
+}
+
+### ============================================
+### 17. CANCELAR AGENDAMENTO
+### ============================================
+DELETE {{baseUrl}}/appointments/[ID-DO-AGENDAMENTO]
+Authorization: {{token}}

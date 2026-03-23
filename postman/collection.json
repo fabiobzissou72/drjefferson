@@ -1,0 +1,326 @@
+{
+  "info": {
+    "name": "Dr. Jefferson API",
+    "description": "API para sistema de agendamento médico",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://sua-api.vercel.app/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticação",
+      "item": [
+        {
+          "name": "Gerar Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"apiKey\": \"{{api_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "token"]
+            },
+            "description": "Gera um token JWT para autenticação"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Listar Pacientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "" }
+              ]
+            },
+            "description": "Lista todos os pacientes com paginação"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", ":id"]
+            },
+            "description": "Busca um paciente específico pelo ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Criar Paciente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Novo Paciente\",\n    \"cpf\": \"000.000.000-00\",\n    \"phone\": \"(11) 99999-9999\",\n    \"email\": \"paciente@email.com\",\n    \"birthDate\": \"1990-01-01\",\n    \"notes\": \"Observações\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"]
+            },
+            "description": "Cria um novo paciente"
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Paciente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Nome Atualizado\",\n    \"phone\": \"(11) 88888-8888\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", ":id"]
+            },
+            "description": "Atualiza os dados de um paciente"
+          },
+          "response": []
+        },
+        {
+          "name": "Deletar Paciente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", ":id"]
+            },
+            "description": "Deleta um paciente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agendamentos",
+      "item": [
+        {
+          "name": "Listar Agendamentos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments?page=1&pageSize=10&includePatient=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "includePatient", "value": "true" },
+                { "key": "date", "value": "" },
+                { "key": "status", "value": "" }
+              ]
+            },
+            "description": "Lista todos os agendamentos"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Agendamento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:id?includePatient=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":id"],
+              "query": [
+                { "key": "includePatient", "value": "true" }
+              ]
+            },
+            "description": "Busca um agendamento específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Criar Agendamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"patientId\": \"uuid-do-paciente\",\n    \"date\": \"2024-12-20\",\n    \"time\": \"14:30\",\n    \"type\": \"return\",\n    \"notes\": \"Retorno de exame\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"]
+            },
+            "description": "Cria um novo agendamento"
+          },
+          "response": []
+        },
+        {
+          "name": "Reagendar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"date\": \"2024-12-22\",\n    \"time\": \"10:00\",\n    \"notes\": \"Reagendado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":id"]
+            },
+            "description": "Reagenda um appointment"
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":id", "status"]
+            },
+            "description": "Atualiza o status do agendamento"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar Agendamento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":id"]
+            },
+            "description": "Cancela um agendamento"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

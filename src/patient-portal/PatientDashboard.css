@@ -1,0 +1,607 @@
+.patient-dashboard {
+  min-height: 100vh;
+  background: var(--bg-dark);
+}
+
+[data-theme="light"] .patient-dashboard {
+  background: var(--bg-light);
+}
+
+.patient-dashboard__header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  z-index: 10;
+}
+
+.patient-dashboard__header-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.patient-dashboard__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.patient-dashboard__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patient-dashboard__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.patient-dashboard__user h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.patient-dashboard__user p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.patient-dashboard__logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.patient-dashboard__logout:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.patient-dashboard__theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.patient-dashboard__theme-toggle:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.patient-dashboard__main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.patient-dashboard__schedule h3,
+.patient-dashboard__appointments h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.patient-dashboard__calendar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.calendar__header button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.calendar__header button:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.calendar__header span {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.calendar__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.calendar__weekdays span {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 8px;
+}
+
+.calendar__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar__day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.calendar__day.empty {
+  visibility: hidden;
+}
+
+.calendar__day.past {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.calendar__day.today {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.calendar__day.selected {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.calendar__day:not(.empty):not(.past):not(.selected):hover {
+  background: var(--bg-glass);
+  border-color: var(--border);
+}
+
+.calendar__day.has-appointment {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--accent);
+}
+
+.calendar__day.has-appointment .appointment-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.patient-dashboard__time-select,
+.patient-dashboard__type-select {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.patient-dashboard__time-select h4,
+.patient-dashboard__type-select h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.time-slot {
+  padding: 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.time-slot:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.time-slot.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.time-slot.booked {
+  opacity: 1;
+  cursor: not-allowed;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+  position: relative;
+}
+
+.time-slot.booked:hover {
+  border-color: var(--danger) !important;
+  transform: none !important;
+}
+
+.booked-label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--danger);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.type-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  gap: 6px;
+}
+
+.type-option:hover {
+  border-color: var(--primary);
+}
+
+.type-option.selected {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--primary);
+}
+
+.type-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.type-price {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.type-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.patient-dashboard__empty-types {
+  padding: 16px;
+  background: var(--bg-glass);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.patient-dashboard__submit {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.patient-dashboard__submit:hover {
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+}
+
+.patient-dashboard__submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.patient-dashboard__appointments {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.no-appointments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appointment-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.appointment-card__date,
+.appointment-card__time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.appointment-card__type {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.appointment-card__type--meta {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.appointment-card__status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.patient-dashboard__success {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--accent);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4);
+  z-index: 100;
+}
+
+@media (max-width: 768px) {
+  .patient-dashboard__header {
+    padding: 14px 16px;
+  }
+
+  .patient-dashboard__header-content {
+    align-items: stretch;
+  }
+
+  .patient-dashboard__user {
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+  }
+
+  .patient-dashboard__actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .patient-dashboard__logout,
+  .patient-dashboard__theme-toggle {
+    min-height: 44px;
+  }
+
+  .patient-dashboard__main {
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .patient-dashboard__calendar,
+  .patient-dashboard__time-select,
+  .patient-dashboard__type-select,
+  .patient-dashboard__appointments {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .calendar__header span {
+    font-size: 0.95rem;
+  }
+
+  .calendar__weekdays span {
+    padding: 6px 2px;
+    font-size: 0.7rem;
+  }
+
+  .calendar__day {
+    min-height: 42px;
+    font-size: 0.82rem;
+  }
+
+  .time-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .time-slot {
+    min-height: 54px;
+    font-size: 0.85rem;
+  }
+
+  .type-option {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .patient-dashboard__submit {
+    padding: 14px 16px;
+    font-size: 0.92rem;
+    border-radius: 16px;
+  }
+
+  .appointment-card {
+    gap: 10px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .appointment-card__type {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-dashboard__main {
+    padding: 14px 12px 20px;
+  }
+
+  .patient-dashboard__calendar,
+  .patient-dashboard__time-select,
+  .patient-dashboard__type-select,
+  .patient-dashboard__appointments {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .time-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .appointment-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .appointment-card__date,
+  .appointment-card__time,
+  .appointment-card__type,
+  .appointment-card__status {
+    width: 100%;
+  }
+
+  .patient-dashboard__actions {
+    gap: 8px;
+  }
+
+  .patient-dashboard__logout {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .patient-dashboard__theme-toggle {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .calendar__header button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .calendar__day {
+    min-height: 38px;
+    font-size: 0.78rem;
+  }
+
+  .calendar__header span {
+    font-size: 0.88rem;
+  }
+
+  .calendar__weekdays span {
+    font-size: 0.66rem;
+    padding: 4px 1px;
+  }
+
+  .patient-dashboard__success {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    transform: none;
+    justify-content: center;
+  }
+}

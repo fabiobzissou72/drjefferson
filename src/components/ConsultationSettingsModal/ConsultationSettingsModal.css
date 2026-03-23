@@ -1,0 +1,89 @@
+.consultation-settings-modal {
+  max-width: 760px;
+}
+
+.consultation-settings__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.consultation-settings__toolbar p {
+  color: var(--text-secondary);
+  max-width: 520px;
+}
+
+.consultation-settings__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.consultation-settings__card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-glass);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.consultation-settings__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.consultation-settings__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.consultation-settings__remove {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.consultation-settings__preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.consultation-settings__preview span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.consultation-settings__preview strong {
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .consultation-settings__preview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
