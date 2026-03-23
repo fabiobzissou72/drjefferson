@@ -35,7 +35,8 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const LOCAL_ADMIN_EMAIL = 'admin@drjefferson.local'
 const LOCAL_ADMIN_PASSWORD = 'Admin@123456'
 const LOCAL_ADMIN_TOKEN_PREFIX = 'local-admin-session'
-const FORCE_LOCAL_ADMIN_MODE = true
+const FORCE_LOCAL_ADMIN_MODE = import.meta.env.VITE_FORCE_LOCAL_ADMIN_MODE === 'true'
+  || (!import.meta.env.VITE_API_URL && import.meta.env.DEV)
 
 const AppContext = createContext()
 
