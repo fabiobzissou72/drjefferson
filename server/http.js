@@ -1,0 +1,60 @@
+import { extractToken, verifyToken } from './auth.js';
+
+const readEnv = (name) => {
+  const value = process.env[name];
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+export function sendJson(response, status, payload) {
+  response.status(status).json(payload);
+}
+
+export function sendSuccess(response, data, message, status = 200) {
+  sendJson(response, status, {
+    success: true,
+    data,
+    message
+  });
+}
+
+export function sendError(response, error, status = 400) {
+  sendJson(response, status, {
+    success: false,
+    error
+  });
+}
+
+export function authMiddleware(request, response) {
+  const token = extractToken(request.headers.authorization || request.headers.Authorization || null);
+
+  if (!token) {
+    sendError(response, 'Token de autenticacao nao fornecido', 401);
+    return false;
+  }
+
+  const apiToken = readEnv('API_TOKEN');
+  if (token === apiToken) {
+    return true;
+  }
+
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    sendError(response, 'Token invalido ou expirado', 401);
+    return false;
+  }
+
+  request.auth = decoded;
+  return true;
+}
+
+export async function parseJsonBody(request) {
+  if (request.body && typeof request.body === 'object') {
+    return request.body;
+  }
+
+  if (typeof request.body === 'string' && request.body) {
+    return JSON.parse(request.body);
+  }
+
+  return {};
+}

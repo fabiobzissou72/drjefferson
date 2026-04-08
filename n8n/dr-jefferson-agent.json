@@ -1,0 +1,378 @@
+{
+  "name": "Dr Jefferson Agent API",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "drj-client-find",
+        "httpMethod": "GET",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookFindClient",
+      "name": "Webhook Find Client",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://drjefferson.vercel.app/api/clients",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "cpf",
+              "value": "={{$json.query.cpf || ''}}"
+            },
+            {
+              "name": "phone",
+              "value": "={{$json.query.phone || ''}}"
+            },
+            {
+              "name": "name",
+              "value": "={{$json.query.name || ''}}"
+            },
+            {
+              "name": "query",
+              "value": "={{$json.query.query || ''}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "HttpFindClient",
+      "name": "HTTP Find Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "path": "drj-client-create",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookCreateClient",
+      "name": "Webhook Create Client",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://drjefferson.vercel.app/api/clients",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.body}}",
+        "options": {}
+      },
+      "id": "HttpCreateClient",
+      "name": "HTTP Create Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "path": "drj-availability",
+        "httpMethod": "GET",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookAvailability",
+      "name": "Webhook Availability",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://drjefferson.vercel.app/api/availability",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "date",
+              "value": "={{$json.query.date}}"
+            },
+            {
+              "name": "type",
+              "value": "={{$json.query.type || 'first'}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "HttpAvailability",
+      "name": "HTTP Availability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "path": "drj-book",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookBook",
+      "name": "Webhook Book",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://drjefferson.vercel.app/api/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.body}}",
+        "options": {}
+      },
+      "id": "HttpBook",
+      "name": "HTTP Book",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "path": "drj-reschedule",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookReschedule",
+      "name": "Webhook Reschedule",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://drjefferson.vercel.app/api/bookings/{{$json.body.bookingId}}/reschedule",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { date: $json.body.date, time: $json.body.time, type: $json.body.type, patientId: $json.body.patientId, notes: $json.body.notes } }}",
+        "options": {}
+      },
+      "id": "HttpReschedule",
+      "name": "HTTP Reschedule",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "path": "drj-cancel",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "WebhookCancel",
+      "name": "Webhook Cancel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://drjefferson.vercel.app/api/bookings/{{$json.body.bookingId}}/cancel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer drjefferson-api-token-2024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "HttpCancel",
+      "name": "HTTP Cancel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        780
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Find Client": {
+      "main": [
+        [
+          {
+            "node": "HTTP Find Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Create Client": {
+      "main": [
+        [
+          {
+            "node": "HTTP Create Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Availability": {
+      "main": [
+        [
+          {
+            "node": "HTTP Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Book": {
+      "main": [
+        [
+          {
+            "node": "HTTP Book",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Reschedule": {
+      "main": [
+        [
+          {
+            "node": "HTTP Reschedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Cancel": {
+      "main": [
+        [
+          {
+            "node": "HTTP Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dr-jefferson-agent-v1",
+  "meta": {
+    "instanceId": "dr-jefferson-agent"
+  },
+  "tags": []
+}

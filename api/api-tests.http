@@ -166,3 +166,64 @@ Authorization: {{token}}
 ### ============================================
 DELETE {{baseUrl}}/appointments/[ID-DO-BLOQUEIO]?permanent=true
 Authorization: {{token}}
+
+### ============================================
+### 19. BUSCAR CLIENTE (ENDPOINT DE AGENTE)
+### ============================================
+GET {{baseUrl}}/clients?cpf=125.334.238-58
+Authorization: {{token}}
+
+### ============================================
+### 20. CRIAR CLIENTE (ENDPOINT DE AGENTE)
+### ============================================
+POST {{baseUrl}}/clients
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Fabio Zissou",
+  "cpf": "125.334.238-58",
+  "phone": "(11) 97030-7000",
+  "email": "fabiobz@gmail.com",
+  "birthDate": "1972-06-12"
+}
+
+### ============================================
+### 21. CONSULTAR HORARIOS DISPONIVEIS
+### ============================================
+GET {{baseUrl}}/availability?date=2026-04-10&type=first
+Authorization: {{token}}
+
+### ============================================
+### 22. AGENDAR COM CHECAGEM DE CONFLITO
+### ============================================
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "patientId": "[ID-DO-PACIENTE]",
+  "date": "2026-04-10",
+  "time": "09:00:00",
+  "type": "first",
+  "notes": "Agendamento criado por agente"
+}
+
+### ============================================
+### 23. REAGENDAR COM CHECAGEM DE CONFLITO
+### ============================================
+POST {{baseUrl}}/bookings/[ID-DO-AGENDAMENTO]/reschedule
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "date": "2026-04-11",
+  "time": "10:00:00",
+  "type": "first"
+}
+
+### ============================================
+### 24. CANCELAR AGENDAMENTO (ENDPOINT DE AGENTE)
+### ============================================
+POST {{baseUrl}}/bookings/[ID-DO-AGENDAMENTO]/cancel
+Authorization: {{token}}
