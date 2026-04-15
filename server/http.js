@@ -65,13 +65,58 @@ export async function authMiddleware(request, response) {
 }
 
 export async function parseJsonBody(request) {
-  if (request.body && typeof request.body === 'object') {
-    return request.body;
-  }
+  try {
+    const parseJsonString = (value) => {
+      if (typeof value !== 'string') {
+        return {};
+      }
 
-  if (typeof request.body === 'string' && request.body) {
-    return JSON.parse(request.body);
-  }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return {};
+      }
 
-  return {};
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return {};
+      }
+    };
+
+    if (Buffer.isBuffer(request.body)) {
+      return parseJsonString(request.body.toString('utf8'));
+    }
+
+    if (typeof request.body === 'string') {
+      return parseJsonString(request.body);
+    }
+
+    if (request.body && typeof request.body === 'object') {
+      return request.body;
+    }
+
+    if (typeof request.on === 'function') {
+      const rawBody = await new Promise((resolve) => {
+        const chunks = [];
+
+        request.on('data', (chunk) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+        });
+
+        request.on('end', () => {
+          resolve(Buffer.concat(chunks).toString('utf8'));
+        });
+
+        request.on('error', () => {
+          resolve('');
+        });
+      });
+
+      return parseJsonString(rawBody);
+    }
+
+    return {};
+  } catch {
+    return {};
+  }
 }

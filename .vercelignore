@@ -2,6 +2,12 @@ api/.env.example
 api/.env.local
 api/.next/
 api/api-tests.http
+api/auth/token.js
+api/availability.js
+api/bookings.js
+api/bookings/
+api/clients.js
+api/docs.js
 api/docker-compose.yml
 api/Dockerfile
 api/n8n/
@@ -9,6 +15,7 @@ api/next-env.d.ts
 api/next.config.js
 api/node_modules/
 api/nul
+api/openapi.json.js
 api/package-lock.json
 api/package.json
 api/QUICKSTART.md
