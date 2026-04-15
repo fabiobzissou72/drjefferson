@@ -1,4 +1,5 @@
 import { extractToken, verifyToken } from './auth.js';
+import { findAdminByAccessToken } from './adminTokens.js';
 
 const readEnv = (name) => {
   const value = process.env[name];
@@ -24,7 +25,7 @@ export function sendError(response, error, status = 400) {
   });
 }
 
-export function authMiddleware(request, response) {
+export async function authMiddleware(request, response) {
   const token = extractToken(request.headers.authorization || request.headers.Authorization || null);
 
   if (!token) {
@@ -39,6 +40,22 @@ export function authMiddleware(request, response) {
 
   const decoded = verifyToken(token);
   if (!decoded) {
+    try {
+      const admin = await findAdminByAccessToken(token);
+      if (admin) {
+        request.auth = {
+          userId: admin.id,
+          type: 'admin',
+          email: admin.email
+        };
+        return true;
+      }
+    } catch (error) {
+      console.error('Admin fixed token auth error:', error);
+      sendError(response, 'Erro ao validar token administrativo', 500);
+      return false;
+    }
+
     sendError(response, 'Token invalido ou expirado', 401);
     return false;
   }

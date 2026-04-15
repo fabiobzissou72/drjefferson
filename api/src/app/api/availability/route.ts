@@ -4,7 +4,7 @@ import { buildAvailability } from '@/lib/scheduling';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   const { searchParams } = new URL(request.url);

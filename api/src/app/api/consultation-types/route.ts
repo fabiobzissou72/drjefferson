@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   try {

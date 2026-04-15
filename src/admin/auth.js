@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:3005/api'
+const DEFAULT_API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3005/api' : '/api'
 
 export const ADMIN_TOKEN_STORAGE_KEY = 'drjefferson_admin_token'
 export const ADMIN_USER_STORAGE_KEY = 'drjefferson_admin_user'

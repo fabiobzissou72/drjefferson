@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, LayoutDashboard, Sun, Moon, Lock, LogOut } from 'lucide-react'
+import { Users, LayoutDashboard, Sun, Moon, Lock, LogOut, KeyRound } from 'lucide-react'
 import { useApp } from '../../App'
+import AdminTokenModal from '../AdminTokenModal/AdminTokenModal'
 import './Header.css'
 
 function Header() {
-  const { currentView, setView, theme, setTheme, logoutAdmin, adminUser } = useApp()
+  const { currentView, setView, theme, setTheme, logoutAdmin, adminUser, canManageAdminToken } = useApp()
   const [scrolled, setScrolled] = useState(false)
+  const [showTokenModal, setShowTokenModal] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,6 +90,17 @@ function Header() {
           >
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </motion.button>
+          {canManageAdminToken && (
+            <motion.button
+              className="header__token"
+              onClick={() => setShowTokenModal(true)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
+              title="Gerenciar token administrativo"
+            >
+              <KeyRound size={18} />
+            </motion.button>
+          )}
           <motion.button
             className="header__logout"
             onClick={logoutAdmin}
@@ -99,6 +112,7 @@ function Header() {
           </motion.button>
         </motion.div>
       </div>
+      {showTokenModal && <AdminTokenModal onClose={() => setShowTokenModal(false)} />}
     </header>
   )
 }

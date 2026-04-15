@@ -7,7 +7,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   try {

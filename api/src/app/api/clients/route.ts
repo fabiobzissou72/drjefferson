@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { patientCreateSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   try {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   try {

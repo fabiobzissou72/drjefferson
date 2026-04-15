@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .next/
+.vercel/
 
 .env
 .env.local
@@ -8,6 +9,7 @@ dist/
 
 *.log
 nul
+supabase/.temp/
 
 .DS_Store
 Thumbs.db

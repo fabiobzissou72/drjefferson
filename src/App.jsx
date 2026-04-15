@@ -163,6 +163,7 @@ function App() {
   const [state, dispatch] = useReducer(appReducer, initialState)
   const [adminToken, setAdminToken] = useState(() => loadStoredAdminSession().token)
   const [adminUser, setAdminUser] = useState(() => loadStoredAdminSession().admin)
+  const [adminTokenDetails, setAdminTokenDetails] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
@@ -181,10 +182,19 @@ function App() {
     clearAdminSession()
     setAdminToken('')
     setAdminUser(null)
+    setAdminTokenDetails(null)
     dispatch({ type: 'SET_PATIENTS', payload: [] })
     dispatch({ type: 'SET_APPOINTMENTS', payload: [] })
     dispatch({ type: 'SET_VIEW', payload: 'dashboard' })
   }, [])
+
+  const syncAdminSession = useCallback((nextToken, nextAdmin = null, nextTokenDetails = null) => {
+    const resolvedAdmin = nextAdmin || adminUser || null
+    persistAdminSession(nextToken, resolvedAdmin)
+    setAdminToken(nextToken)
+    setAdminUser(resolvedAdmin)
+    setAdminTokenDetails(nextTokenDetails)
+  }, [adminUser])
 
   const apiFetch = useCallback(async (endpoint, options = {}, tokenOverride = '') => {
     const authToken = tokenOverride || adminToken
@@ -201,6 +211,7 @@ function App() {
     if (!response.ok) {
       if (response.status === 401 && !isPatientPortalRoute) {
         logoutAdmin()
+        throw new Error('Sessao expirada. Faca login novamente.')
       }
 
       const errorMessage = payload?.error || payload?.message || `API error: ${response.status}`
@@ -210,7 +221,7 @@ function App() {
     return payload
   }, [adminToken, isPatientPortalRoute, logoutAdmin])
 
-  const refreshPatients = useCallback(async () => {
+  const refreshPatients = useCallback(async (tokenOverride = '') => {
     let patients = []
 
     if (useLocalAdminMode) {
@@ -218,7 +229,7 @@ function App() {
       patients = Array.isArray(payload) ? payload.map(normalizeApiPatient) : []
     } else {
       try {
-        const payload = await apiFetch('patients?page=1&pageSize=1000')
+        const payload = await apiFetch('patients?page=1&pageSize=1000', {}, tokenOverride)
         patients = Array.isArray(payload?.data) ? payload.data.map(normalizeApiPatient) : []
       } catch (error) {
         console.warn('Falling back to Supabase patients:', error)
@@ -231,7 +242,7 @@ function App() {
     return patients
   }, [apiFetch, useLocalAdminMode])
 
-  const refreshAppointments = useCallback(async () => {
+  const refreshAppointments = useCallback(async (tokenOverride = '') => {
     let appointments = []
 
     if (useLocalAdminMode) {
@@ -239,7 +250,7 @@ function App() {
       appointments = Array.isArray(payload) ? payload.map(normalizeApiAppointment) : []
     } else {
       try {
-        const payload = await apiFetch('appointments')
+        const payload = await apiFetch('appointments', {}, tokenOverride)
         appointments = Array.isArray(payload?.data) ? payload.data.map(normalizeApiAppointment) : []
       } catch (error) {
         console.warn('Falling back to Supabase appointments:', error)
@@ -263,6 +274,33 @@ function App() {
     dispatch({ type: 'SET_CONSULTATION_TYPES', payload: remoteTypes })
     return remoteTypes
   }, [useLocalAdminMode])
+
+  const loadAdminTokenDetails = useCallback(async () => {
+    if (useLocalAdminMode || !adminToken) {
+      setAdminTokenDetails(null)
+      return null
+    }
+
+    const payload = await apiFetch('admin/token')
+    const tokenDetails = payload?.data || null
+    setAdminTokenDetails(tokenDetails)
+    return tokenDetails
+  }, [adminToken, apiFetch, useLocalAdminMode])
+
+  const regenerateAdminToken = useCallback(async () => {
+    if (useLocalAdminMode || !adminToken) {
+      throw new Error('Token manual indisponivel neste modo de acesso')
+    }
+
+    const payload = await apiFetch('admin/token', { method: 'POST' })
+    const tokenDetails = payload?.data || null
+
+    if (tokenDetails?.token) {
+      syncAdminSession(tokenDetails.token, tokenDetails.admin || adminUser, tokenDetails)
+    }
+
+    return tokenDetails
+  }, [adminToken, adminUser, apiFetch, syncAdminSession, useLocalAdminMode])
 
   useEffect(() => {
     dispatch({ type: 'SET_THEME', payload: 'light' })
@@ -294,12 +332,14 @@ function App() {
 
     const bootstrap = async () => {
       if (!adminToken) {
+        setAdminTokenDetails(null)
         setAuthReady(true)
         return
       }
 
       if (isLocalAdminToken(adminToken)) {
         setAdminUser((currentAdmin) => currentAdmin || createLocalAdminUser())
+        setAdminTokenDetails(null)
         await refreshConsultationTypes()
         setAuthReady(true)
         return
@@ -309,6 +349,7 @@ function App() {
         clearAdminSession()
         setAdminToken('')
         setAdminUser(null)
+        setAdminTokenDetails(null)
         setAuthReady(true)
         return
       }
@@ -321,6 +362,7 @@ function App() {
         clearAdminSession()
         setAdminToken('')
         setAdminUser(null)
+        setAdminTokenDetails(null)
       } finally {
         setAuthReady(true)
       }
@@ -396,6 +438,7 @@ function App() {
         persistAdminSession(sessionToken, sessionAdmin)
         setAdminToken(sessionToken)
         setAdminUser(sessionAdmin)
+        setAdminTokenDetails(null)
         await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
         return
       }
@@ -412,10 +455,16 @@ function App() {
         throw new Error('Resposta de login invalida')
       }
 
-      persistAdminSession(sessionToken, sessionAdmin)
-      setAdminToken(sessionToken)
-      setAdminUser(sessionAdmin)
-      await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
+      syncAdminSession(sessionToken, sessionAdmin, {
+        token: sessionToken,
+        tokenCreatedAt: payload?.data?.tokenCreatedAt || null,
+        admin: sessionAdmin
+      })
+      await Promise.all([
+        refreshPatients(sessionToken),
+        refreshAppointments(sessionToken),
+        refreshConsultationTypes()
+      ])
     } catch (error) {
       setLoginError(error.message || 'Nao foi possivel autenticar')
     } finally {
@@ -425,12 +474,18 @@ function App() {
   }
 
   const saveConsultationTypes = async (types) => {
-    const storedTypes = useLocalAdminMode
-      ? persistConsultationTypes(types)
-      : await saveConsultationTypesToApi(types, adminToken)
-    dispatch({ type: 'SET_CONSULTATION_TYPES', payload: storedTypes })
-    addToast('Tipos de consulta atualizados!', 'success')
-    return storedTypes
+    try {
+      const storedTypes = useLocalAdminMode
+        ? persistConsultationTypes(types)
+        : await saveConsultationTypesToApi(types, adminToken)
+      dispatch({ type: 'SET_CONSULTATION_TYPES', payload: storedTypes })
+      addToast('Tipos de consulta atualizados!', 'success')
+      return storedTypes
+    } catch (error) {
+      console.error('Error saving consultation types:', error)
+      addToast(error.message || 'Erro ao salvar tipos de consulta', 'error')
+      throw error
+    }
   }
 
   const addPatient = async (patient) => {
@@ -775,6 +830,8 @@ function App() {
     toasts: state.toasts,
     theme: state.theme,
     adminUser,
+    adminTokenDetails,
+    canManageAdminToken: Boolean(adminToken) && !useLocalAdminMode,
     setView: (view) => dispatch({ type: 'SET_VIEW', payload: view }),
     setTheme: (theme) => dispatch({ type: 'SET_THEME', payload: theme }),
     addPatient,
@@ -785,6 +842,8 @@ function App() {
     deleteAppointment,
     deleteBlockedAppointment,
     saveConsultationTypes,
+    loadAdminTokenDetails,
+    regenerateAdminToken,
     getPatient,
     addToast,
     logoutAdmin

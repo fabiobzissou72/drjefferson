@@ -10,33 +10,23 @@ export default async function handler(request, response) {
 
   if (request.method === 'GET') {
     try {
-      const query = String(request.query.query || '').trim();
-      const name = String(request.query.name || '').trim();
-      const cpf = String(request.query.cpf || '').trim();
-      const phone = String(request.query.phone || '').trim();
+      const search = String(request.query.search || '');
       const page = parseInt(String(request.query.page || '1'), 10);
-      const pageSize = parseInt(String(request.query.pageSize || '20'), 10);
+      const pageSize = parseInt(String(request.query.pageSize || '10'), 10);
 
-      let dbQuery = supabaseAdmin
+      let query = supabaseAdmin
         .from('patients')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      if (cpf) {
-        dbQuery = dbQuery.eq('cpf', cpf);
-      } else if (phone) {
-        dbQuery = dbQuery.ilike('phone', `%${phone.replace(/\D/g, '')}%`);
-      } else {
-        const searchTerm = name || query;
-        if (searchTerm) {
-          const escaped = searchTerm.replace(/[%_]/g, '');
-          dbQuery = dbQuery.or(`name.ilike.%${escaped}%,cpf.ilike.%${escaped}%,phone.ilike.%${escaped}%`);
-        }
+      if (search) {
+        const escapedSearch = search.replace(/[%_]/g, '');
+        query = query.or(`name.ilike.%${escapedSearch}%,cpf.ilike.%${escapedSearch}%,phone.ilike.%${escapedSearch}%`);
       }
 
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
-      const { data, error, count } = await dbQuery.range(from, to);
+      const { data, error, count } = await query.range(from, to);
 
       if (error) {
         throw error;
@@ -51,8 +41,8 @@ export default async function handler(request, response) {
         totalPages: Math.ceil((count || 0) / pageSize)
       });
     } catch (error) {
-      console.error('Search clients error:', error);
-      return sendError(response, 'Erro ao buscar clientes', 500);
+      console.error('List patients error:', error);
+      return sendError(response, 'Erro ao listar pacientes', 500);
     }
   }
 
@@ -76,7 +66,7 @@ export default async function handler(request, response) {
       }
 
       if (existingPatient) {
-        return sendError(response, 'Ja existe um cliente com este CPF', 409);
+        return sendError(response, 'Ja existe um paciente com este CPF', 409);
       }
 
       const { data: patient, error } = await supabaseAdmin
@@ -92,10 +82,10 @@ export default async function handler(request, response) {
         throw error;
       }
 
-      return sendSuccess(response, mapPatientRow(patient), 'Cliente criado com sucesso', 201);
+      return sendSuccess(response, mapPatientRow(patient), 'Paciente criado com sucesso', 201);
     } catch (error) {
-      console.error('Create client error:', error);
-      return sendError(response, 'Erro ao criar cliente', 500);
+      console.error('Create patient error:', error);
+      return sendError(response, 'Erro ao criar paciente', 500);
     }
   }
 

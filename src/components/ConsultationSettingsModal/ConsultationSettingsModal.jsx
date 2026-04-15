@@ -47,8 +47,12 @@ function ConsultationSettingsModal({ onClose }) {
         price: toConsultationPriceNumber(type.price)
       }))
 
-    await saveConsultationTypes(cleanedTypes)
-    onClose()
+    try {
+      await saveConsultationTypes(cleanedTypes)
+      onClose()
+    } catch {
+      // A toast with the API error is shown by the app layer.
+    }
   }
 
   return (

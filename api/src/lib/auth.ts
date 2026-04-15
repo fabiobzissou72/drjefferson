@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
+import type { StringValue } from 'ms';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-me';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN: StringValue | number =
+  process.env.JWT_EXPIRES_IN && /^\d+$/.test(process.env.JWT_EXPIRES_IN)
+    ? Number(process.env.JWT_EXPIRES_IN)
+    : (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
 export interface TokenPayload {
   userId: string;

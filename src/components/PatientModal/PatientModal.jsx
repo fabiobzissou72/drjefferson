@@ -99,18 +99,18 @@ function PatientModal({ patient, onClose, onSave }) {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
-    
-    if (patient) {
-      updatePatient({ ...patient, ...formData })
-    } else {
-      addPatient(formData)
+
+    const savedPatient = patient
+      ? await updatePatient({ ...patient, ...formData })
+      : await addPatient(formData)
+
+    if (savedPatient) {
+      onClose()
     }
-    
-    onClose()
   }
 
   return (

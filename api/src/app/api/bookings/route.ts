@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { appointmentCreateSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
-  const authError = authMiddleware(request);
+  const authError = await authMiddleware(request);
   if (authError) return authError;
 
   try {

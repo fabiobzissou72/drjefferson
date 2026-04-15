@@ -8,7 +8,7 @@ export default async function handler(request, response) {
     return sendError(response, 'Metodo nao permitido', 405);
   }
 
-  if (!authMiddleware(request, response)) {
+  if (!await authMiddleware(request, response)) {
     return;
   }
 

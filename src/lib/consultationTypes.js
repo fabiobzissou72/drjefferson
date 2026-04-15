@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'drjefferson_consultation_types'
-const DEFAULT_API_BASE_URL = 'http://localhost:3005/api'
+const DEFAULT_API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3005/api' : '/api'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, '')
 const CONSULTATION_TYPES_API_URL = import.meta.env.VITE_CONSULTATION_TYPES_API_URL || `${API_BASE_URL}/consultation-types`
 
@@ -219,27 +219,23 @@ export const fetchConsultationTypes = async () => {
 export const saveConsultationTypesToApi = async (types, token) => {
   const normalizedTypes = (types || []).map(normalizeConsultationType)
 
-  try {
-    const response = await fetch(CONSULTATION_TYPES_API_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(normalizedTypes)
-    })
+  const response = await fetch(CONSULTATION_TYPES_API_URL, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(normalizedTypes)
+  })
 
-    if (!response.ok) {
-      throw new Error(`Consultation types API error: ${response.status}`)
-    }
+  const payload = await response.json().catch(() => ({}))
 
-    const payload = await response.json()
-    const apiTypes = Array.isArray(payload?.data) ? payload.data : normalizedTypes
-    return persistConsultationTypes(apiTypes)
-  } catch (error) {
-    console.warn('Saving consultation types locally after API failure:', error)
-    return persistConsultationTypes(normalizedTypes)
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || `Consultation types API error: ${response.status}`)
   }
+
+  const apiTypes = Array.isArray(payload?.data) ? payload.data : normalizedTypes
+  return persistConsultationTypes(apiTypes)
 }
 
 export const createConsultationTypeDraft = () => {
