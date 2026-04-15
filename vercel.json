@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|vite.svg|favicon.ico).*)",
+      "source": "/api/:path*",
+      "destination": "https://drjefferson-api.vercel.app/api/:path*"
+    },
+    {
+      "source": "/((?!assets/|vite.svg|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

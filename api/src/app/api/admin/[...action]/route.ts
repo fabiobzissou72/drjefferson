@@ -7,6 +7,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 const getAction = (params: { action?: string[] }) => params.action?.[0] || '';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const toAdminPayload = (admin: { id: string; email: string; full_name?: string | null; fullName?: string | null }) => ({
   id: admin.id,
   email: admin.email,
@@ -30,7 +32,7 @@ async function resolveAdminFromRequest(request: NextRequest) {
   }
 
   const decoded = verifyToken(token);
-  if (decoded?.type === 'admin') {
+  if (decoded?.type === 'admin' && UUID_REGEX.test(decoded.userId)) {
     return { error: null, adminId: decoded.userId };
   }
 
