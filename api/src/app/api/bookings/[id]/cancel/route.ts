@@ -12,6 +12,10 @@ export async function POST(
 
   try {
     const bookingId = params.id;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookingId)) {
+      return generateErrorResponse('Agendamento nao encontrado', 404);
+    }
+
     const { data: appointment, error } = await supabaseAdmin
       .from('appointments')
       .update({
