@@ -68,18 +68,32 @@ export async function POST(request: NextRequest) {
       return generateErrorResponse(validation.error.errors[0].message, 400);
     }
 
-    const { data: existingPatient, error: existingError } = await supabaseAdmin
-      .from('patients')
-      .select('id')
-      .eq('cpf', body.cpf)
-      .maybeSingle();
-
-    if (existingError) {
-      throw existingError;
+    // Check CPF duplicate
+    if (body.cpf) {
+      const { data: byCpf, error: cpfError } = await supabaseAdmin
+        .from('patients')
+        .select('id')
+        .eq('cpf', body.cpf)
+        .maybeSingle();
+      if (cpfError) throw cpfError;
+      if (byCpf) return generateErrorResponse('Ja existe um cliente com este CPF', 409);
     }
 
-    if (existingPatient) {
-      return generateErrorResponse('Ja existe um cliente com este CPF', 409);
+    // Check phone duplicate
+    if (body.phone) {
+      const normalizedPhone = body.phone.replace(/\D/g, '');
+      const { data: byPhone, error: phoneError } = await supabaseAdmin
+        .from('patients')
+        .select('id, name, phone')
+        .ilike('phone', `%${normalizedPhone}%`)
+        .maybeSingle();
+      if (phoneError) throw phoneError;
+      if (byPhone) {
+        return NextResponse.json(
+          { success: false, message: 'Ja existe um cliente com este telefone', existingId: byPhone.id, existingName: byPhone.name },
+          { status: 409 }
+        );
+      }
     }
 
     const { data: patient, error } = await supabaseAdmin
