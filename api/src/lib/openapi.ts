@@ -64,7 +64,8 @@ export function createOpenApiSpec(baseUrl: string) {
       { name: 'Patients' },
       { name: 'Appointments' },
       { name: 'Consultation Types' },
-      { name: 'Automation' }
+      { name: 'Automation' },
+      { name: 'Plans' }
     ],
     components: {
       securitySchemes: {
@@ -251,6 +252,32 @@ export function createOpenApiSpec(baseUrl: string) {
             available: { type: 'boolean', example: true },
             conflictCount: { type: 'integer', example: 0 },
             conflicts: { type: 'array', items: ref('AvailabilityConflict') }
+          }
+        },
+        PatientPlan: {
+          type: 'object',
+          required: ['id', 'patientName', 'planType', 'status'],
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            patientName: { type: 'string', example: 'Kliximy de Jesus Sousa' },
+            phone: { type: 'string', example: '558681689100', nullable: true },
+            planType: {
+              type: 'string',
+              enum: ['trimestral_misto', 'trimestral_presencial', 'mounjaro', 'concluido', 'avulsa'],
+              example: 'trimestral_misto'
+            },
+            planName: { type: 'string', example: 'Plano Trimestral - Mista', nullable: true },
+            startDate: { type: 'string', format: 'date', nullable: true },
+            secondConsultDate: { type: 'string', format: 'date', nullable: true },
+            lastConsultDate: { type: 'string', format: 'date', nullable: true },
+            endDate: { type: 'string', format: 'date', nullable: true },
+            city: { type: 'string', example: 'Teresina', nullable: true },
+            scheduledNext: { type: 'boolean', example: false },
+            observation: { type: 'string', nullable: true },
+            status: { type: 'string', enum: ['active', 'completed'], example: 'active' },
+            sheetSource: { type: 'string', nullable: true },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
         AvailabilityResponse: {
@@ -573,7 +600,23 @@ export function createOpenApiSpec(baseUrl: string) {
             content: { 'application/json': { schema: ref('PatientCreateInput') } }
           },
           responses: {
-            '201': { description: 'Cliente criado', content: { 'application/json': { schema: successEnvelope(ref('Patient'), 'Cliente criado com sucesso') } } }
+            '201': { description: 'Cliente criado', content: { 'application/json': { schema: successEnvelope(ref('Patient'), 'Cliente criado com sucesso') } } },
+            '409': {
+              description: 'CPF ou telefone ja cadastrado. Retorna existingId e existingName se for duplicata de telefone.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: false },
+                      message: { type: 'string', example: 'Ja existe um cliente com este telefone' },
+                      existingId: { type: 'string', format: 'uuid' },
+                      existingName: { type: 'string', example: 'Fabio Zissou' }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -626,6 +669,39 @@ export function createOpenApiSpec(baseUrl: string) {
           responses: {
             '200': { description: 'Agendamento reagendado', content: { 'application/json': { schema: successEnvelope(ref('Appointment'), 'Agendamento reagendado com sucesso') } } },
             '409': { description: 'Conflito de horario', content: { 'application/json': { schema: bookingConflict } } }
+          }
+        }
+      },
+      '/api/patient-plans': {
+        get: {
+          tags: ['Plans'],
+          summary: 'Busca planos dos pacientes',
+          description: 'Retorna os planos/contratos dos pacientes. Usado pelo agente de IA para consultar histórico de planos.',
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { name: 'phone', in: 'query', description: 'Telefone do paciente (busca parcial)', schema: { type: 'string', example: '558681689100' } },
+            { name: 'name', in: 'query', description: 'Nome do paciente (busca parcial)', schema: { type: 'string' } },
+            { name: 'planType', in: 'query', description: 'Tipo de plano', schema: { type: 'string', enum: ['trimestral_misto', 'trimestral_presencial', 'mounjaro', 'concluido', 'avulsa'] } },
+            { name: 'status', in: 'query', description: 'Status do plano', schema: { type: 'string', enum: ['active', 'completed'] } }
+          ],
+          responses: {
+            '200': {
+              description: 'Planos encontrados',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['success', 'data', 'total'],
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { type: 'array', items: ref('PatientPlan') },
+                      total: { type: 'integer', example: 1 }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { description: 'Nao autorizado', content: { 'application/json': { schema: errorResponse } } }
           }
         }
       },
