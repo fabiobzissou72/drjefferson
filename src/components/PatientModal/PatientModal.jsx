@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Search, User, Phone, Mail, Calendar, FileText, AlertCircle } from 'lucide-react'
+import { X, Search, User, Phone, Mail, Calendar, FileText, AlertCircle, MapPin, CreditCard, Pill } from 'lucide-react'
 import { useApp } from '../../App'
+import { PLAN_TYPES, CITIES, calculateConsultationDates, formatPlanPrice } from '../../lib/planTypes'
 import '../Modal/Modal.css'
 
 function PatientModal({ patient, onClose, onSave }) {
@@ -12,7 +13,15 @@ function PatientModal({ patient, onClose, onSave }) {
     phone: '',
     email: '',
     birthDate: '',
-    notes: ''
+    notes: '',
+    city: '',
+    planType: '',
+    planStartDate: '',
+    consultation1Date: '',
+    consultation2Date: '',
+    consultation3Date: '',
+    protocoloMonjaro: false,
+    observations: ''
   })
   const [errors, setErrors] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
@@ -25,7 +34,15 @@ function PatientModal({ patient, onClose, onSave }) {
         phone: patient.phone || '',
         email: patient.email || '',
         birthDate: patient.birthDate || '',
-        notes: patient.notes || ''
+        notes: patient.notes || '',
+        city: patient.city || '',
+        planType: patient.planType || '',
+        planStartDate: patient.planStartDate || '',
+        consultation1Date: patient.consultation1Date || '',
+        consultation2Date: patient.consultation2Date || '',
+        consultation3Date: patient.consultation3Date || '',
+        protocoloMonjaro: patient.protocoloMonjaro || false,
+        observations: patient.observations || ''
       })
     }
   }, [patient])
@@ -84,8 +101,8 @@ function PatientModal({ patient, onClose, onSave }) {
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    let formattedValue = value
+    const { name, value, type, checked } = e.target
+    let formattedValue = type === 'checkbox' ? checked : value
     
     if (name === 'cpf') {
       formattedValue = formatCPF(value)
@@ -93,7 +110,18 @@ function PatientModal({ patient, onClose, onSave }) {
       formattedValue = formatPhone(value)
     }
     
-    setFormData(prev => ({ ...prev, [name]: formattedValue }))
+    // Se mudou a data de início do plano, recalcular as datas das consultas
+    if (name === 'planStartDate' && value) {
+      const dates = calculateConsultationDates(value)
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: formattedValue,
+        ...dates
+      }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: formattedValue }))
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
     }
@@ -223,14 +251,146 @@ function PatientModal({ patient, onClose, onSave }) {
           <div className="form__group">
             <label>
               <FileText size={16} />
-              Observações
+              Observações Médicas
             </label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              placeholder="Observações sobre o paciente..."
-              rows={3}
+              placeholder="Observações médicas sobre o paciente..."
+              rows={2}
+            />
+          </div>
+
+          <div className="form__divider" style={{ margin: '20px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}></div>
+
+          <h3 style={{ fontSize: '16px', marginBottom: '15px', color: 'rgba(255,255,255,0.9)' }}>
+            <CreditCard size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+            Informações do Plano
+          </h3>
+
+          <div className="form__row">
+            <div className="form__group">
+              <label>
+                <MapPin size={16} />
+                Cidade de Atendimento
+              </label>
+              <select
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+              >
+                <option value="">Selecione a cidade</option>
+                {CITIES.map(city => (
+                  <option key={city.value} value={city.value}>
+                    {city.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form__group">
+              <label>
+                <CreditCard size={16} />
+                Plano Contratado
+              </label>
+              <select
+                name="planType"
+                value={formData.planType}
+                onChange={handleChange}
+              >
+                <option value="">Selecione o plano</option>
+                {Object.values(PLAN_TYPES).map(plan => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.label} - {formatPlanPrice(plan.price)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {formData.planType && PLAN_TYPES[formData.planType]?.consultations === 3 && (
+            <>
+              <div className="form__group">
+                <label>
+                  <Calendar size={16} />
+                  Data de Início do Plano
+                </label>
+                <input
+                  type="date"
+                  name="planStartDate"
+                  value={formData.planStartDate}
+                  onChange={handleChange}
+                />
+                <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  As datas das 3 consultas serão calculadas automaticamente (1 por mês)
+                </small>
+              </div>
+
+              {formData.planStartDate && (
+                <div className="form__row" style={{ gap: '10px' }}>
+                  <div className="form__group">
+                    <label>1ª Consulta</label>
+                    <input
+                      type="date"
+                      name="consultation1Date"
+                      value={formData.consultation1Date}
+                      onChange={handleChange}
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+                  <div className="form__group">
+                    <label>2ª Consulta</label>
+                    <input
+                      type="date"
+                      name="consultation2Date"
+                      value={formData.consultation2Date}
+                      onChange={handleChange}
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+                  <div className="form__group">
+                    <label>3ª Consulta</label>
+                    <input
+                      type="date"
+                      name="consultation3Date"
+                      value={formData.consultation3Date}
+                      onChange={handleChange}
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="form__row">
+            <div className="form__group">
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="checkbox"
+                  name="protocoloMonjaro"
+                  checked={formData.protocoloMonjaro}
+                  onChange={handleChange}
+                  style={{ marginRight: '8px', width: 'auto', cursor: 'pointer' }}
+                />
+                <Pill size={16} style={{ marginRight: '6px' }} />
+                Protocolo Monjaro
+              </label>
+            </div>
+          </div>
+
+          <div className="form__group">
+            <label>
+              <FileText size={16} />
+              Observações Gerais
+            </label>
+            <textarea
+              name="observations"
+              value={formData.observations}
+              onChange={handleChange}
+              placeholder="Observações gerais, anotações administrativas..."
+              rows={2}
             />
           </div>
 

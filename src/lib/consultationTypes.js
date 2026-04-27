@@ -12,21 +12,21 @@ const LEGACY_CONSULTATION_TYPES = {
     active: true
   },
   checkup: {
-    label: 'Segunda vez',
+    label: 'Retorno Presencial',
     mode: 'presential',
     durationMinutes: 60,
     price: 0,
     active: true
   },
   return: {
-    label: 'Retorno se ja foi cliente',
+    label: 'Retorno Presencial',
     mode: 'presential',
     durationMinutes: 60,
     price: 0,
     active: true
   },
   emergency: {
-    label: 'Retorno online',
+    label: 'Retorno Online',
     mode: 'online',
     durationMinutes: 30,
     price: 0,
@@ -38,34 +38,25 @@ export const DEFAULT_CONSULTATION_TYPES = [
   {
     id: 'first-visit',
     value: 'first',
-    label: 'Primeira vez',
+    label: 'Primeira Consulta',
     mode: 'mixed',
     durationMinutes: 90,
     price: 0,
     active: true
   },
   {
-    id: 'second-visit',
+    id: 'return-presential',
     value: 'checkup',
-    label: 'Segunda vez',
+    label: 'Retorno Presencial',
     mode: 'presential',
     durationMinutes: 60,
     price: 0,
     active: true
   },
   {
-    id: 'returning-client',
-    value: 'return',
-    label: 'Retorno se ja foi cliente',
-    mode: 'presential',
-    durationMinutes: 60,
-    price: 0,
-    active: true
-  },
-  {
-    id: 'online-return',
+    id: 'return-online',
     value: 'emergency',
-    label: 'Retorno online',
+    label: 'Retorno Online',
     mode: 'online',
     durationMinutes: 30,
     price: 0,

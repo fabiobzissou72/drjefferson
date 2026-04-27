@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Plus, Edit2, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserX } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserX, MapPin, CreditCard, Pill, AlertCircle } from 'lucide-react'
 import { useApp } from '../../App'
 import { isBlockedPatient } from '../../lib/blockedAppointments'
 import { matchesPatientSearch } from '../../lib/patientSearch'
+import { getPlanLabel, formatDateDisplay, getConsultationDateStatus, getDateStatusColor, getDateStatusLabel } from '../../lib/planTypes'
 import PatientModal from '../PatientModal/PatientModal'
 import './PatientList.css'
 
@@ -109,70 +110,174 @@ function PatientList() {
           </div>
         ) : (
           <>
-            <div className="patient-table">
-              <div className="patient-table__header">
-                <div className="col-patient">Paciente</div>
-                <div className="col-contact">Contato</div>
-                <div className="col-cpf">CPF</div>
-                <div className="col-age">Idade</div>
-                <div className="col-actions">Ações</div>
+            <div className="patient-table" style={{ overflowX: 'auto' }}>
+              <div className="patient-table__header" style={{ display: 'grid', gridTemplateColumns: '200px 150px 120px 180px 100px 100px 100px 100px 80px 80px 100px', gap: '10px', minWidth: '1400px' }}>
+                <div>Paciente</div>
+                <div>Telefone</div>
+                <div>Cidade</div>
+                <div>Plano</div>
+                <div>Início</div>
+                <div>1ª Consulta</div>
+                <div>2ª Consulta</div>
+                <div>3ª Consulta</div>
+                <div>Monjaro</div>
+                <div>Idade</div>
+                <div>Ações</div>
               </div>
               <div className="patient-table__body">
                 <AnimatePresence mode="popLayout">
-                  {paginatedPatients.map((patient, index) => (
-                    <motion.div 
-                      key={patient.id}
-                      className="patient-table__row"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <div className="col-patient">
-                        <div className="patient-avatar">
-                          {patient.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                  {paginatedPatients.map((patient, index) => {
+                    const date1Status = getConsultationDateStatus(patient.consultation1Date)
+                    const date2Status = getConsultationDateStatus(patient.consultation2Date)
+                    const date3Status = getConsultationDateStatus(patient.consultation3Date)
+                    
+                    return (
+                      <motion.div 
+                        key={patient.id}
+                        className="patient-table__row"
+                        style={{ display: 'grid', gridTemplateColumns: '200px 150px 120px 180px 100px 100px 100px 100px 80px 80px 100px', gap: '10px', minWidth: '1400px', alignItems: 'center' }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div className="patient-avatar" style={{ flexShrink: 0 }}>
+                            {patient.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          </div>
+                          <div style={{ overflow: 'hidden' }}>
+                            <div className="patient-name" style={{ fontSize: '14px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {patient.name}
+                            </div>
+                            {patient.observations && (
+                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {patient.observations.slice(0, 30)}{patient.observations.length > 30 ? '...' : ''}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="patient-info">
-                          <span className="patient-name">{patient.name}</span>
-                          {patient.notes && (
-                            <span className="patient-notes">{patient.notes.slice(0, 40)}{patient.notes.length > 40 ? '...' : ''}</span>
+                        
+                        <div>
+                          <a href={`tel:${patient.phone}`} className="contact-item" style={{ fontSize: '13px' }}>
+                            <Phone size={12} />
+                            {patient.phone}
+                          </a>
+                        </div>
+                        
+                        <div style={{ fontSize: '13px' }}>
+                          {patient.city ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <MapPin size={12} />
+                              {patient.city}
+                            </span>
+                          ) : '-'}
+                        </div>
+                        
+                        <div style={{ fontSize: '12px' }}>
+                          {patient.planType ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.8)' }}>
+                              <CreditCard size={12} />
+                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {getPlanLabel(patient.planType).replace('Plano ', '').replace('Consulta ', '')}
+                              </span>
+                            </span>
+                          ) : '-'}
+                        </div>
+                        
+                        <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+                          {formatDateDisplay(patient.planStartDate)}
+                        </div>
+                        
+                        <div style={{ fontSize: '12px' }}>
+                          {patient.consultation1Date ? (
+                            <div style={{ 
+                              display: 'inline-block',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              backgroundColor: getDateStatusColor(date1Status) + '20',
+                              border: `1px solid ${getDateStatusColor(date1Status)}`,
+                              fontSize: '11px',
+                              fontFamily: 'monospace'
+                            }}>
+                              {formatDateDisplay(patient.consultation1Date)}
+                            </div>
+                          ) : '-'}
+                        </div>
+                        
+                        <div style={{ fontSize: '12px' }}>
+                          {patient.consultation2Date ? (
+                            <div style={{ 
+                              display: 'inline-block',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              backgroundColor: getDateStatusColor(date2Status) + '20',
+                              border: `1px solid ${getDateStatusColor(date2Status)}`,
+                              fontSize: '11px',
+                              fontFamily: 'monospace'
+                            }}>
+                              {formatDateDisplay(patient.consultation2Date)}
+                            </div>
+                          ) : '-'}
+                        </div>
+                        
+                        <div style={{ fontSize: '12px' }}>
+                          {patient.consultation3Date ? (
+                            <div style={{ 
+                              display: 'inline-block',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              backgroundColor: getDateStatusColor(date3Status) + '20',
+                              border: `1px solid ${getDateStatusColor(date3Status)}`,
+                              fontSize: '11px',
+                              fontFamily: 'monospace'
+                            }}>
+                              {formatDateDisplay(patient.consultation3Date)}
+                            </div>
+                          ) : '-'}
+                        </div>
+                        
+                        <div style={{ textAlign: 'center' }}>
+                          {patient.protocoloMonjaro ? (
+                            <span style={{ 
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              backgroundColor: '#8b5cf6',
+                              color: 'white'
+                            }} title="Protocolo Monjaro">
+                              <Pill size={14} />
+                            </span>
+                          ) : (
+                            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>-</span>
                           )}
                         </div>
-                      </div>
-                      <div className="col-contact">
-                        <a href={`tel:${patient.phone}`} className="contact-item">
-                          <Phone size={14} />
-                          {patient.phone}
-                        </a>
-                        {patient.email && (
-                          <a href={`mailto:${patient.email}`} className="contact-item">
-                            <Mail size={14} />
-                            {patient.email}
-                          </a>
-                        )}
-                      </div>
-                      <div className="col-cpf mono">{patient.cpf}</div>
-                      <div className="col-age">
-                        <span className="age-badge">{calculateAge(patient.birthDate)}</span>
-                      </div>
-                      <div className="col-actions">
-                        <button 
-                          className="action-btn action-btn--edit"
-                          onClick={() => handleEdit(patient)}
-                          title="Editar"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          className="action-btn action-btn--delete"
-                          onClick={() => setDeleteConfirm(patient)}
-                          title="Excluir"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                        
+                        <div style={{ textAlign: 'center' }}>
+                          <span className="age-badge">{calculateAge(patient.birthDate)}</span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                          <button 
+                            className="action-btn action-btn--edit"
+                            onClick={() => handleEdit(patient)}
+                            title="Editar"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button 
+                            className="action-btn action-btn--delete"
+                            onClick={() => setDeleteConfirm(patient)}
+                            title="Excluir"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </AnimatePresence>
               </div>
             </div>

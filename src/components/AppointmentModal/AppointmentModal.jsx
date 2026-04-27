@@ -32,6 +32,7 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
     date: date || new Date().toISOString().split('T')[0],
     time: normalizeTime(appointment?.time) || '09:00',
     type: appointment?.type || '',
+    consultationMode: appointment?.consultationMode || 'presencial',
     notes: appointment?.notes || ''
   })
   const dropdownRef = useRef(null)
@@ -54,6 +55,7 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
       date: date || appointment?.date || new Date().toISOString().split('T')[0],
       time: normalizeTime(appointment?.time) || '09:00',
       type: blockedMode ? BLOCKED_APPOINTMENT_TYPE : defaultType,
+      consultationMode: appointment?.consultationMode || 'presencial',
       notes: blockedMode ? stripBlockedAppointmentPrefix(appointment?.notes) : appointment?.notes || ''
     })
   }, [
@@ -281,42 +283,75 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
           </div>
 
           {!isBlockedMode && (
-            <div className="form__group">
-              <label>
-                <FileText size={16} />
-                Tipo de Consulta *
-              </label>
+            <>
+              <div className="form__group">
+                <label>
+                  <FileText size={16} />
+                  Tipo de Consulta *
+                </label>
 
-              {activeConsultationTypes.length === 0 ? (
-                <div className="appointment-modal__empty-types">
-                  Nenhum tipo de consulta ativo. Configure os tipos no painel do medico.
-                </div>
-              ) : (
-                <div className="type-options">
-                  {activeConsultationTypes.map((type) => {
-                    const details = getConsultationTypeDetails(type.value, consultationTypes)
-                    const ModeIcon = details.mode === 'online' ? Video : Building2
+                {activeConsultationTypes.length === 0 ? (
+                  <div className="appointment-modal__empty-types">
+                    Nenhum tipo de consulta ativo. Configure os tipos no painel do medico.
+                  </div>
+                ) : (
+                  <div className="type-options">
+                    {activeConsultationTypes.map((type) => {
+                      const details = getConsultationTypeDetails(type.value, consultationTypes)
+                      const ModeIcon = details.mode === 'online' ? Video : Building2
 
-                    return (
-                      <button
-                        key={details.value}
-                        type="button"
-                        className={`type-option ${formData.type === details.value ? 'active' : ''}`}
-                        onClick={() => setFormData({ ...formData, type: details.value })}
-                      >
-                        <span className="type-option__icon">
-                          <ModeIcon size={20} />
-                        </span>
-                        <span className="type-option__label">{details.label}</span>
-                        <span className="type-option__meta">
-                          {`${getConsultationModeLabel(details.mode)} - ${formatConsultationDuration(details.durationMinutes)} - ${formatConsultationPrice(details.price)}`}
-                        </span>
-                      </button>
-                    )
-                  })}
+                      return (
+                        <button
+                          key={details.value}
+                          type="button"
+                          className={`type-option ${formData.type === details.value ? 'active' : ''}`}
+                          onClick={() => setFormData({ ...formData, type: details.value })}
+                        >
+                          <span className="type-option__icon">
+                            <ModeIcon size={20} />
+                          </span>
+                          <span className="type-option__label">{details.label}</span>
+                          <span className="type-option__meta">
+                            {`${getConsultationModeLabel(details.mode)} - ${formatConsultationDuration(details.durationMinutes)} - ${formatConsultationPrice(details.price)}`}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="form__group">
+                <label>
+                  <Video size={16} />
+                  Modo da Consulta *
+                </label>
+                <div className="type-options" style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className={`type-option ${formData.consultationMode === 'presencial' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, consultationMode: 'presencial' })}
+                    style={{ flex: 1 }}
+                  >
+                    <span className="type-option__icon">
+                      <Building2 size={20} />
+                    </span>
+                    <span className="type-option__label">Presencial</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`type-option ${formData.consultationMode === 'online' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, consultationMode: 'online' })}
+                    style={{ flex: 1 }}
+                  >
+                    <span className="type-option__icon">
+                      <Video size={20} />
+                    </span>
+                    <span className="type-option__label">Online</span>
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            </>
           )}
 
           <div className="form__group">
