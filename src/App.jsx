@@ -147,6 +147,7 @@ const toSupabaseAppointmentPayload = (appointment) => ({
   date: appointment.date,
   time: toDatabaseTime(appointment.time),
   type: appointment.type,
+  consultation_mode: appointment.consultationMode || appointment.consultation_mode || 'presencial',
   status: toDatabaseAppointmentStatus(appointment.status || 'pending'),
   notes: appointment.notes || null
 })
@@ -632,6 +633,7 @@ function App() {
         date: appointment.date,
         time: appointment.time,
         type: appointment.isBlocked ? BLOCKED_APPOINTMENT_TYPE : appointment.type,
+        consultationMode: appointment.consultationMode || 'presencial',
         status: toDatabaseAppointmentStatus(appointment.status || 'pending'),
         notes: appointment.isBlocked
           ? buildBlockedAppointmentNotes(appointment.notes)
