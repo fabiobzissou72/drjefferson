@@ -48,7 +48,12 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
     const defaultType = appointment?.type || activeConsultationTypes[0]?.value || 'first'
 
     setIsBlockedMode(blockedMode)
-    setSelectedPatient(blockedMode ? null : currentPatient || null)
+    
+    // Só seta o paciente se for edição de agendamento existente
+    if (appointment?.id) {
+      setSelectedPatient(blockedMode ? null : currentPatient || null)
+    }
+    
     setSearchTerm('')
     setShowDropdown(false)
     setFormData({

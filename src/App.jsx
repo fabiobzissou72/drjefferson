@@ -694,6 +694,7 @@ function App() {
         date: appointment.date,
         time: appointment.time,
         type: appointment.isBlocked ? BLOCKED_APPOINTMENT_TYPE : appointment.type,
+        consultationMode: appointment.consultationMode || appointment.consultation_mode || 'presencial',
         status: toDatabaseAppointmentStatus(appointment.status || 'pending'),
         notes: appointment.isBlocked
           ? buildBlockedAppointmentNotes(appointment.notes)
