@@ -240,7 +240,7 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
                       </div>
                       <div className="patient-dropdown__info">
                         <span className="patient-dropdown__name">{patient.name}</span>
-                        <span className="patient-dropdown__details">{patient.cpf} - {patient.phone}</span>
+                        <span className="patient-dropdown__details">{patient.cpf || ''} {patient.phone ? `- ${patient.phone}` : ''}</span>
                       </div>
                     </div>
                   ))
@@ -297,22 +297,22 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
                 ) : (
                   <div className="type-options">
                     {activeConsultationTypes.map((type) => {
-                      const details = getConsultationTypeDetails(type.value, consultationTypes)
-                      const ModeIcon = details.mode === 'online' ? Video : Building2
+                      const details = getConsultationTypeDetails(type?.value, consultationTypes)
+                      const ModeIcon = details?.mode === 'online' ? Video : Building2
 
                       return (
                         <button
-                          key={details.value}
+                          key={details?.value || 'unknown'}
                           type="button"
-                          className={`type-option ${formData.type === details.value ? 'active' : ''}`}
-                          onClick={() => setFormData({ ...formData, type: details.value })}
+                          className={`type-option ${formData.type === details?.value ? 'active' : ''}`}
+                          onClick={() => setFormData({ ...formData, type: details?.value })}
                         >
                           <span className="type-option__icon">
                             <ModeIcon size={20} />
                           </span>
-                          <span className="type-option__label">{details.label}</span>
+                          <span className="type-option__label">{details?.label || 'Consulta'}</span>
                           <span className="type-option__meta">
-                            {`${getConsultationModeLabel(details.mode)} - ${formatConsultationDuration(details.durationMinutes)} - ${formatConsultationPrice(details.price)}`}
+                            {`${getConsultationModeLabel(details?.mode)} - ${formatConsultationDuration(details?.durationMinutes)} - ${formatConsultationPrice(details?.price)}`}
                           </span>
                         </button>
                       )

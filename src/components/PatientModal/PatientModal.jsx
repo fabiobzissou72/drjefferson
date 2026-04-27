@@ -66,6 +66,10 @@ function PatientModal({ patient, onClose, onSave }) {
       newErrors.phone = 'Telefone inválido'
     }
     
+    if (!formData.city) {
+      newErrors.city = 'Cidade é obrigatória'
+    }
+    
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido'
     }
@@ -273,12 +277,13 @@ function PatientModal({ patient, onClose, onSave }) {
             <div className="form__group">
               <label>
                 <MapPin size={16} />
-                Cidade de Atendimento
+                Cidade de Atendimento *
               </label>
               <select
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
+                className={errors.city ? 'error' : ''}
               >
                 <option value="">Selecione a cidade</option>
                 {CITIES.map(city => (
@@ -287,6 +292,7 @@ function PatientModal({ patient, onClose, onSave }) {
                   </option>
                 ))}
               </select>
+              {errors.city && <span className="error-message">{errors.city}</span>}
             </div>
 
             <div className="form__group">
