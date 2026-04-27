@@ -80,7 +80,7 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
     if (currentPatient) {
       setSelectedPatient(currentPatient)
     }
-  }, [appointment?.patient_id, isBlockedMode, patients, selectedPatient])
+  }, [appointment?.patient_id, isBlockedMode, patients])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
