@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://drjefferson-api.vercel.app/api/:path*"
+      "destination": "https://api-sand-seven.vercel.app/api/:path*"
     },
     {
       "source": "/((?!assets/|vite.svg|favicon.ico).*)",

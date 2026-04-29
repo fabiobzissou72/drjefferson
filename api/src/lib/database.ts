@@ -10,6 +10,7 @@ type PatientRow = {
   email: string | null;
   birth_date: string | null;
   notes: string | null;
+  city: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -34,6 +35,7 @@ export const mapPatientRow = (row: PatientRow): Patient => ({
   email: row.email || undefined,
   birthDate: row.birth_date || undefined,
   notes: row.notes || undefined,
+  city: (row.city as Patient['city']) || undefined,
   createdAt: row.created_at,
   updatedAt: row.updated_at
 });
@@ -44,8 +46,8 @@ export const mapAppointmentRow = (row: AppointmentRow): Appointment => ({
   date: row.date,
   time: row.time?.slice(0, 5) || row.time,
   type: row.type,
-  status: row.status,
-  notes: row.notes || undefined,
+  status: row.notes?.startsWith('[FALTOU]') ? 'missed' : row.status,
+  notes: row.notes?.startsWith('[FALTOU]') ? (row.notes.replace(/^\[FALTOU\]\s?/, '') || undefined) : (row.notes || undefined),
   createdAt: row.created_at,
   updatedAt: row.updated_at
 });
@@ -67,6 +69,7 @@ export const mapPatientInput = (input: Partial<Patient>) => ({
   email: input.email ?? null,
   birth_date: input.birthDate ?? null,
   notes: input.notes ?? null,
+  city: input.city ?? null,
   updated_at: new Date().toISOString()
 });
 

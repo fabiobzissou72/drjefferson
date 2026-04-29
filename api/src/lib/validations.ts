@@ -9,7 +9,8 @@ export const patientCreateSchema = z.object({
   phone: z.string().regex(/^\(\d{2}\)\s?\d{4,5}-\d{4}$/, 'Telefone invalido'),
   email: z.string().email('Email invalido').optional().or(z.literal('')),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data invalida').optional(),
-  notes: z.string().max(1000).optional()
+  notes: z.string().max(1000).optional(),
+  city: z.enum(['Parnaíba', 'Teresina']).optional()
 });
 
 export const patientUpdateSchema = patientCreateSchema.partial();
@@ -19,15 +20,20 @@ export const appointmentCreateSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data invalida (formato: YYYY-MM-DD)'),
   time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Horario invalido (formato: HH:mm ou HH:mm:ss)'),
   type: z.enum(appointmentTypeValues),
-  notes: z.string().max(1000).optional()
+  notes: z.string().max(1000).nullish(),
+  consultationMode: z.enum(consultationModeValues).nullish(),
+  consultation_mode: z.enum(consultationModeValues).nullish()
 });
 
 export const appointmentUpdateSchema = z.object({
-  patientId: z.string().uuid('ID de paciente invalido').optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data invalida').optional(),
-  time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Horario invalido').optional(),
-  type: z.enum(appointmentTypeValues).optional(),
-  notes: z.string().max(1000).optional()
+  patientId: z.string().uuid('ID de paciente invalido').nullish(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data invalida').nullish(),
+  time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Horario invalido').nullish(),
+  type: z.enum(appointmentTypeValues).nullish(),
+  status: z.enum(['pending', 'confirmed', 'completed', 'missed', 'cancelled']).nullish(),
+  notes: z.string().max(1000).nullish(),
+  consultationMode: z.enum(consultationModeValues).nullish(),
+  consultation_mode: z.enum(consultationModeValues).nullish()
 });
 
 export const statusUpdateSchema = z.object({

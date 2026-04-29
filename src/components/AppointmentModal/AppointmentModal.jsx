@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Search, User, Calendar, Clock, FileText, Lock, Building2, Video } from 'lucide-react'
+import { X, Search, User, Calendar, Clock, FileText, Lock, Building2, Video, MapPin } from 'lucide-react'
 import { useApp } from '../../App'
 import { hasAppointmentConflict, normalizeTime } from '../../lib/appointmentUtils'
 import { APPOINTMENT_TIME_SLOTS } from '../../lib/timeSlots'
@@ -33,7 +33,8 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
     time: normalizeTime(appointment?.time) || '09:00',
     type: appointment?.type || '',
     consultationMode: appointment?.consultationMode || 'presencial',
-    notes: appointment?.notes || ''
+    notes: appointment?.notes || '',
+    city: appointment?.city || ''
   })
   const dropdownRef = useRef(null)
 
@@ -61,10 +62,12 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
       time: normalizeTime(appointment?.time) || '09:00',
       type: blockedMode ? BLOCKED_APPOINTMENT_TYPE : defaultType,
       consultationMode: appointment?.consultationMode || 'presencial',
-      notes: blockedMode ? stripBlockedAppointmentPrefix(appointment?.notes) : appointment?.notes || ''
+      notes: blockedMode ? stripBlockedAppointmentPrefix(appointment?.notes) : appointment?.notes || '',
+      city: appointment?.city || ''
     })
   }, [
     activeConsultationTypes,
+    appointment?.city,
     appointment?.date,
     appointment?.id,
     appointment?.notes,
@@ -84,6 +87,9 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
 
     if (currentPatient) {
       setSelectedPatient(currentPatient)
+      if (currentPatient.city && !formData.city) {
+        setFormData((prev) => ({ ...prev, city: currentPatient.city }))
+      }
     }
   }, [appointment?.patient_id, isBlockedMode, patients])
 
@@ -104,6 +110,9 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
 
   const handleSelectPatient = (patient) => {
     setSelectedPatient(patient)
+    if (patient.city) {
+      setFormData((prev) => ({ ...prev, city: patient.city }))
+    }
     setSearchTerm('')
     setShowDropdown(false)
   }
@@ -359,6 +368,25 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
             </>
           )}
 
+          {!isBlockedMode && (
+            <div className="form__group">
+              <label>
+                <MapPin size={16} />
+                Cidade *
+              </label>
+              <select
+                name="city"
+                value={formData.city}
+                onChange={(event) => setFormData({ ...formData, city: event.target.value })}
+                required
+              >
+                <option value="">Selecione a cidade...</option>
+                <option value="Parnaíba">Parnaíba</option>
+                <option value="Teresina">Teresina</option>
+              </select>
+            </div>
+          )}
+
           <div className="form__group">
             <label>
               <FileText size={16} />
@@ -384,7 +412,7 @@ function AppointmentModal({ date, appointment, onClose, forcedMode = null }) {
             <button
               type="submit"
               className="btn btn--primary"
-              disabled={(!isBlockedMode && !selectedPatient) || (!isBlockedMode && activeConsultationTypes.length === 0)}
+              disabled={(!isBlockedMode && !selectedPatient) || (!isBlockedMode && activeConsultationTypes.length === 0) || (!isBlockedMode && !formData.city)}
             >
               {submitLabel}
             </button>

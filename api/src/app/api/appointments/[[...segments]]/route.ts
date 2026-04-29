@@ -141,12 +141,18 @@ export async function PUT(
       return generateErrorResponse(validation.error.errors[0].message, 400);
     }
 
+    const isMissed = body.status === 'missed'
+    const dbStatus = isMissed ? 'cancelled' : (body.status ?? undefined)
+    const dbNotes = isMissed
+      ? `[FALTOU]${body.notes ? ' ' + body.notes : ''}`
+      : (body.notes ?? null)
     const payload = {
       patient_id: body.patientId,
       date: body.date,
       time: body.time,
       type: body.type,
-      notes: body.notes ?? null,
+      status: dbStatus,
+      notes: dbNotes,
       updated_at: new Date().toISOString()
     };
 

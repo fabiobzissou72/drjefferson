@@ -74,15 +74,45 @@ const normalizeApiPatient = (patient) => ({
   ...patient,
   birthDate: patient.birthDate || patient.birth_date || '',
   email: patient.email || '',
-  notes: patient.notes || ''
+  notes: patient.notes || '',
+  city: patient.city || '',
+  planType: patient.planType || patient.plan_type || '',
+  planStartDate: patient.planStartDate || patient.plan_start_date || '',
+  consultation1Date: patient.consultation1Date || patient.consultation_1_date || '',
+  consultation2Date: patient.consultation2Date || patient.consultation_2_date || '',
+  consultation3Date: patient.consultation3Date || patient.consultation_3_date || '',
+  protocoloMonjaro: patient.protocoloMonjaro ?? patient.protocolo_monjaro ?? false,
+  observations: patient.observations || ''
 })
 
-const normalizeApiAppointment = (appointment) => ({
-  ...appointment,
-  patient_id: appointment.patient_id || appointment.patientId,
-  patientId: appointment.patientId || appointment.patient_id,
-  time: normalizeTime(appointment.time)
-})
+const isMissedAppointment = (notes) => Boolean(notes?.includes('[FALTOU]'))
+
+const extractCityFromNotes = (notes) => {
+  if (!notes) return ''
+  const match = notes.match(/\[CIDADE:([^\]]+)\]/)
+  return match ? match[1] : ''
+}
+
+const stripNotePrefixes = (notes) => {
+  if (!notes) return null
+  return notes
+    .replace(/\[CIDADE:[^\]]+\]\s?/g, '')
+    .replace(/\[FALTOU\]\s?/g, '')
+    .trim() || null
+}
+
+const normalizeApiAppointment = (appointment) => {
+  const rawNotes = appointment.notes || null
+  return {
+    ...appointment,
+    patient_id: appointment.patient_id || appointment.patientId,
+    patientId: appointment.patientId || appointment.patient_id,
+    time: normalizeTime(appointment.time),
+    city: extractCityFromNotes(rawNotes),
+    notes: stripNotePrefixes(rawNotes),
+    status: isMissedAppointment(rawNotes) ? 'missed' : (appointment.status || 'pending')
+  }
+}
 
 const createLocalAdminUser = (email = LOCAL_ADMIN_EMAIL) => ({
   id: 'local-admin',
@@ -139,18 +169,36 @@ const toSupabasePatientPayload = (patient) => ({
   phone: patient.phone || '',
   email: patient.email || '',
   birth_date: patient.birthDate || null,
-  notes: patient.notes || null
+  notes: patient.notes || null,
+  city: patient.city || null,
+  plan_type: patient.planType || null,
+  plan_start_date: patient.planStartDate || null,
+  consultation_1_date: patient.consultation1Date || null,
+  consultation_2_date: patient.consultation2Date || null,
+  consultation_3_date: patient.consultation3Date || null,
+  protocolo_monjaro: patient.protocoloMonjaro || false,
+  observations: patient.observations || null
 })
 
-const toSupabaseAppointmentPayload = (appointment) => ({
-  patient_id: appointment.patientId || appointment.patient_id,
-  date: appointment.date,
-  time: toDatabaseTime(appointment.time),
-  type: appointment.type,
-  consultation_mode: appointment.consultationMode || appointment.consultation_mode || 'presencial',
-  status: toDatabaseAppointmentStatus(appointment.status || 'pending'),
-  notes: appointment.notes || null
-})
+const toSupabaseAppointmentPayload = (appointment) => {
+  const isMissed = appointment.status === 'missed'
+  const dbStatus = isMissed ? 'cancelled' : toDatabaseAppointmentStatus(appointment.status || 'pending')
+  const baseNotes = appointment.notes || null
+  const missedNotes = isMissed ? `[FALTOU]${baseNotes ? ' ' + baseNotes : ''}` : baseNotes
+  const cityPrefix = appointment.city ? `[CIDADE:${appointment.city}]` : ''
+  const finalNotes = cityPrefix
+    ? `${cityPrefix}${missedNotes ? ' ' + missedNotes : ''}`
+    : missedNotes
+  return {
+    patient_id: appointment.patientId || appointment.patient_id,
+    date: appointment.date,
+    time: toDatabaseTime(appointment.time),
+    type: appointment.type,
+    consultation_mode: appointment.consultationMode || appointment.consultation_mode || 'presencial',
+    status: dbStatus,
+    notes: finalNotes
+  }
+}
 
 export function useApp() {
   const context = useContext(AppContext)
@@ -265,16 +313,9 @@ function App() {
   }, [apiFetch, useLocalAdminMode])
 
   const refreshConsultationTypes = useCallback(async () => {
-    if (useLocalAdminMode) {
-      const localTypes = loadStoredConsultationTypes()
-      dispatch({ type: 'SET_CONSULTATION_TYPES', payload: localTypes })
-      return localTypes
-    }
-
-    const remoteTypes = await fetchConsultationTypes()
-    dispatch({ type: 'SET_CONSULTATION_TYPES', payload: remoteTypes })
-    return remoteTypes
-  }, [useLocalAdminMode])
+    dispatch({ type: 'SET_CONSULTATION_TYPES', payload: DEFAULT_CONSULTATION_TYPES })
+    return DEFAULT_CONSULTATION_TYPES
+  }, [])
 
   const loadAdminTokenDetails = useCallback(async () => {
     if (useLocalAdminMode || !adminToken) {
@@ -306,13 +347,10 @@ function App() {
   useEffect(() => {
     dispatch({ type: 'SET_THEME', payload: 'light' })
     localStorage.setItem('drjefferson_theme', 'light')
-    const storedConsultationTypes = loadStoredConsultationTypes()
-    dispatch({
-      type: 'SET_CONSULTATION_TYPES',
-      payload: storedConsultationTypes?.length
-        ? storedConsultationTypes
-        : persistConsultationTypes(DEFAULT_CONSULTATION_TYPES)
-    })
+    // Always clear old keys and start from DEFAULT_CONSULTATION_TYPES
+    localStorage.removeItem('drjefferson_consultation_types')
+    localStorage.removeItem('drjefferson_consultation_types_v2')
+    dispatch({ type: 'SET_CONSULTATION_TYPES', payload: DEFAULT_CONSULTATION_TYPES })
   }, [])
 
   useEffect(() => {
@@ -510,7 +548,8 @@ function App() {
               phone: patient.phone || '',
               email: patient.email || '',
               birthDate: patient.birthDate || undefined,
-              notes: patient.notes || undefined
+              notes: patient.notes || undefined,
+              city: patient.city || undefined
             })
           })
           createdPatient = normalizeApiPatient(payload?.data)
@@ -556,7 +595,8 @@ function App() {
               phone: patient.phone || '',
               email: patient.email || '',
               birthDate: patient.birthDate || undefined,
-              notes: patient.notes || undefined
+              notes: patient.notes || undefined,
+              city: patient.city || undefined
             })
           })
           updatedPatient = normalizeApiPatient(payload?.data)

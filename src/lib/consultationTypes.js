@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'drjefferson_consultation_types'
+const STORAGE_KEY = 'drjefferson_consultation_types_v2'
 const DEFAULT_API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3005/api' : '/api'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, '')
 const CONSULTATION_TYPES_API_URL = import.meta.env.VITE_CONSULTATION_TYPES_API_URL || `${API_BASE_URL}/consultation-types`
@@ -36,30 +36,39 @@ const LEGACY_CONSULTATION_TYPES = {
 
 export const DEFAULT_CONSULTATION_TYPES = [
   {
-    id: 'first-visit',
+    id: 'plano-misto',
     value: 'first',
-    label: 'Primeira Consulta',
+    label: 'Plano Misto Trimestral',
     mode: 'mixed',
     durationMinutes: 90,
-    price: 0,
+    price: 1097,
     active: true
   },
   {
-    id: 'return-presential',
+    id: 'plano-presencial',
     value: 'checkup',
-    label: 'Retorno Presencial',
+    label: 'Plano Presencial Trimestral',
     mode: 'presential',
-    durationMinutes: 60,
-    price: 0,
+    durationMinutes: 90,
+    price: 1297,
     active: true
   },
   {
-    id: 'return-online',
+    id: 'consulta-personalizada-presencial',
+    value: 'return',
+    label: 'Consulta Personalizada Presencial',
+    mode: 'presential',
+    durationMinutes: 90,
+    price: 697,
+    active: true
+  },
+  {
+    id: 'consulta-personalizada-online',
     value: 'emergency',
-    label: 'Retorno Online',
+    label: 'Consulta Personalizada Online',
     mode: 'online',
-    durationMinutes: 30,
-    price: 0,
+    durationMinutes: 60,
+    price: 597,
     active: true
   }
 ]
