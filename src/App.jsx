@@ -478,24 +478,26 @@ function App() {
 
       // Always try Supabase Auth first (works in any mode)
       if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-        try {
-          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-            method: 'POST',
-            headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: normalizedEmail, password })
-          })
-          if (res.ok) {
-            const data = await res.json()
-            const sessionToken = data.access_token
-            const sessionAdmin = createLocalAdminUser(normalizedEmail)
-            persistAdminSession(sessionToken, sessionAdmin)
-            setAdminToken(sessionToken)
-            setAdminUser(sessionAdmin)
-            setAdminTokenDetails(null)
-            await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
-            return
-          }
-        } catch (_) { /* fall through */ }
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail, password })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          const sessionToken = data.access_token
+          const sessionAdmin = createLocalAdminUser(normalizedEmail)
+          persistAdminSession(sessionToken, sessionAdmin)
+          setAdminToken(sessionToken)
+          setAdminUser(sessionAdmin)
+          setAdminTokenDetails(null)
+          await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
+          return
+        }
+        // If it's not the local fallback email, show Supabase error directly
+        if (normalizedEmail !== LOCAL_ADMIN_EMAIL) {
+          throw new Error(data.error_description || data.msg || data.message || 'Email ou senha invalidos')
+        }
       }
 
       if (FORCE_LOCAL_ADMIN_MODE) {
