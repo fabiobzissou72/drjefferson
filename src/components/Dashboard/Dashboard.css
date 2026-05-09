@@ -126,6 +126,23 @@
   filter: saturate(1.05);
 }
 
+.dashboard__report-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard__report-date {
+  height: 56px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .dashboard__secondary-btn {
   display: flex;
   align-items: center;

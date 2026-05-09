@@ -216,6 +216,7 @@ function App() {
   const [authReady, setAuthReady] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
+  const [registerSuccess, setRegisterSuccess] = useState('')
   const isPatientPortalRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/paciente')
   const useLocalAdminMode = FORCE_LOCAL_ADMIN_MODE || isLocalAdminToken(adminToken)
 
@@ -384,6 +385,15 @@ function App() {
         return
       }
 
+      // Supabase JWT token (login via Supabase Auth)
+      if (adminToken.startsWith('eyJ')) {
+        setAdminUser((currentAdmin) => currentAdmin || createLocalAdminUser())
+        setAdminTokenDetails(null)
+        await refreshConsultationTypes()
+        setAuthReady(true)
+        return
+      }
+
       if (FORCE_LOCAL_ADMIN_MODE) {
         clearAdminSession()
         setAdminToken('')
@@ -467,6 +477,27 @@ function App() {
       const normalizedEmail = String(email || '').trim().toLowerCase()
 
       if (FORCE_LOCAL_ADMIN_MODE) {
+        // Try Supabase Auth first
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: normalizedEmail, password })
+          })
+          if (res.ok) {
+            const data = await res.json()
+            const sessionToken = data.access_token
+            const sessionAdmin = createLocalAdminUser(normalizedEmail)
+            persistAdminSession(sessionToken, sessionAdmin)
+            setAdminToken(sessionToken)
+            setAdminUser(sessionAdmin)
+            setAdminTokenDetails(null)
+            await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
+            return
+          }
+        } catch (_) { /* fall through to local admin */ }
+
+        // Fall back to local admin credentials
         if (normalizedEmail !== LOCAL_ADMIN_EMAIL || password !== LOCAL_ADMIN_PASSWORD) {
           throw new Error('Email ou senha invalidos')
         }
@@ -509,6 +540,31 @@ function App() {
     } finally {
       setLoginLoading(false)
       setAuthReady(true)
+    }
+  }
+
+  const handleAdminRegister = async ({ email, password }) => {
+    setLoginLoading(true)
+    setLoginError('')
+    setRegisterSuccess('')
+    try {
+      const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+        method: 'POST',
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, email_confirm: true })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.msg || data.message || 'Erro ao criar conta')
+      setRegisterSuccess(`Conta criada para ${email}! Pode fazer login agora.`)
+    } catch (error) {
+      setLoginError(error.message || 'Erro ao criar conta')
+    } finally {
+      setLoginLoading(false)
     }
   }
 
@@ -901,7 +957,7 @@ function App() {
           </main>
         </div>
       ) : !adminToken ? (
-        <AdminLogin onLogin={handleAdminLogin} loading={loginLoading} error={loginError} />
+        <AdminLogin onLogin={handleAdminLogin} onRegister={handleAdminRegister} loading={loginLoading} error={loginError} success={registerSuccess} />
       ) : (
         <div className="app">
           <Header />

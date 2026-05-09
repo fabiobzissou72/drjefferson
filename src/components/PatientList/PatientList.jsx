@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Plus, Edit2, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserX, MapPin, CreditCard, Pill, AlertCircle } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserX, MapPin, CreditCard, Pill, AlertCircle, ClipboardList } from 'lucide-react'
 import { useApp } from '../../App'
 import { isBlockedPatient } from '../../lib/blockedAppointments'
 import { matchesPatientSearch } from '../../lib/patientSearch'
 import { getPlanLabel, formatDateDisplay, getConsultationDateStatus, getDateStatusColor, getDateStatusLabel } from '../../lib/planTypes'
 import PatientModal from '../PatientModal/PatientModal'
+import ProntuarioModal from '../ProntuarioModal/ProntuarioModal'
 import './PatientList.css'
 
 function PatientList() {
@@ -15,6 +16,7 @@ function PatientList() {
   const [editingPatient, setEditingPatient] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [prontuarioPatient, setProntuarioPatient] = useState(null)
   const itemsPerPage = 10
 
   const visiblePatients = useMemo(() => {
@@ -260,14 +262,22 @@ function PatientList() {
                         </div>
                         
                         <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button 
+                          <button
+                            className="action-btn"
+                            onClick={() => setProntuarioPatient(patient)}
+                            title="Ver Prontuário"
+                            style={{ color: '#5ea58b' }}
+                          >
+                            <ClipboardList size={14} />
+                          </button>
+                          <button
                             className="action-btn action-btn--edit"
                             onClick={() => handleEdit(patient)}
                             title="Editar"
                           >
                             <Edit2 size={14} />
                           </button>
-                          <button 
+                          <button
                             className="action-btn action-btn--delete"
                             onClick={() => setDeleteConfirm(patient)}
                             title="Excluir"
@@ -308,9 +318,16 @@ function PatientList() {
       </motion.div>
 
       {showModal && (
-        <PatientModal 
+        <PatientModal
           patient={editingPatient}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {prontuarioPatient && (
+        <ProntuarioModal
+          patient={prontuarioPatient}
+          onClose={() => setProntuarioPatient(null)}
         />
       )}
 

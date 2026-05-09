@@ -6,8 +6,10 @@ import {
   Clock,
   CheckCircle,
   Plus,
-  Settings2
+  Settings2,
+  FileDown
 } from 'lucide-react'
+import { generateDailyReport } from '../../lib/reportPDF'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -32,6 +34,7 @@ function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [calendarResetKey, setCalendarResetKey] = useState(0)
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0])
   const formatDateBR = (value) => new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
 
   const stats = useMemo(() => {
@@ -226,6 +229,29 @@ function Dashboard() {
         </div>
 
         <div className="dashboard__header-actions">
+          <div className="dashboard__report-group">
+            <input
+              type="date"
+              value={reportDate}
+              onChange={e => setReportDate(e.target.value)}
+              className="dashboard__report-date"
+            />
+            <motion.button
+              className="dashboard__secondary-btn"
+              onClick={() => {
+                const dayAppointments = (appointments || []).filter(
+                  a => a.date === reportDate && a.status !== 'cancelled'
+                ).sort((a, b) => a.time.localeCompare(b.time))
+                generateDailyReport(reportDate, dayAppointments, getPatient)
+              }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <FileDown size={18} />
+              <span>Baixar Relatorio</span>
+            </motion.button>
+          </div>
+
           <motion.button
             className="dashboard__secondary-btn"
             onClick={() => setShowConsultationSettings(true)}
