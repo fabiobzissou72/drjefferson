@@ -218,7 +218,7 @@ function App() {
   const [loginError, setLoginError] = useState('')
   const [registerSuccess, setRegisterSuccess] = useState('')
   const isPatientPortalRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/paciente')
-  const useLocalAdminMode = FORCE_LOCAL_ADMIN_MODE || isLocalAdminToken(adminToken)
+  const useLocalAdminMode = FORCE_LOCAL_ADMIN_MODE || isLocalAdminToken(adminToken) || Boolean(adminToken && adminToken.startsWith('eyJ'))
 
   const addToast = useCallback((message, type = 'info') => {
     const id = uuidv4()
@@ -476,8 +476,8 @@ function App() {
     try {
       const normalizedEmail = String(email || '').trim().toLowerCase()
 
-      if (FORCE_LOCAL_ADMIN_MODE) {
-        // Try Supabase Auth first
+      // Always try Supabase Auth first (works in any mode)
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
         try {
           const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
             method: 'POST',
@@ -495,8 +495,10 @@ function App() {
             await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
             return
           }
-        } catch (_) { /* fall through to local admin */ }
+        } catch (_) { /* fall through */ }
+      }
 
+      if (FORCE_LOCAL_ADMIN_MODE) {
         // Fall back to local admin credentials
         if (normalizedEmail !== LOCAL_ADMIN_EMAIL || password !== LOCAL_ADMIN_PASSWORD) {
           throw new Error('Email ou senha invalidos')
