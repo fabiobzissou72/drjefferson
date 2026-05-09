@@ -274,7 +274,8 @@ function App() {
   const refreshPatients = useCallback(async (tokenOverride = '') => {
     let patients = []
 
-    if (useLocalAdminMode) {
+    const useSupabase = useLocalAdminMode || tokenOverride.startsWith('eyJ')
+    if (useSupabase) {
       const payload = await supabaseFetch('patients?select=*&order=created_at.desc')
       patients = Array.isArray(payload) ? payload.map(normalizeApiPatient) : []
     } else {
@@ -295,7 +296,8 @@ function App() {
   const refreshAppointments = useCallback(async (tokenOverride = '') => {
     let appointments = []
 
-    if (useLocalAdminMode) {
+    const useSupabase = useLocalAdminMode || tokenOverride.startsWith('eyJ')
+    if (useSupabase) {
       const payload = await supabaseFetch('appointments?select=*&order=date.asc,time.asc')
       appointments = Array.isArray(payload) ? payload.map(normalizeApiAppointment) : []
     } else {
@@ -491,7 +493,7 @@ function App() {
           setAdminToken(sessionToken)
           setAdminUser(sessionAdmin)
           setAdminTokenDetails(null)
-          await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
+          await Promise.all([refreshPatients(sessionToken), refreshAppointments(sessionToken), refreshConsultationTypes()])
           return
         }
         // If it's not the local fallback email, show Supabase error directly
