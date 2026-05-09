@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Phone, Calendar, MapPin, CreditCard, FileText, Paperclip, Download, Pill, Save } from 'lucide-react'
+import { X, Phone, Calendar, MapPin, CreditCard, FileText, Paperclip, Download, Pill, Save, Upload, Trash2 } from 'lucide-react'
 import { useApp } from '../../App'
 import { getPlanLabel, formatDateDisplay } from '../../lib/planTypes'
 import './ProntuarioModal.css'
@@ -32,6 +32,27 @@ async function listFiles(patientId) {
   return res.json()
 }
 
+async function uploadFile(patientId, file) {
+  const path = `${patientId}/${Date.now()}_${file.name}`
+  const res = await storageRequest('POST', `/object/${EXAMES_BUCKET}/${path}`, {
+    headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' },
+    body: file
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message || 'Falha no upload')
+  }
+  return path
+}
+
+async function deleteFile(path) {
+  const res = await storageRequest('DELETE', `/object/${EXAMES_BUCKET}`, {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prefixes: [path] })
+  })
+  return res.ok
+}
+
 async function downloadFile(path, filename) {
   const res = await storageRequest('GET', `/object/${EXAMES_BUCKET}/${path}`)
   if (!res.ok) return
@@ -61,6 +82,8 @@ function ProntuarioModal({ patient, onClose }) {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (patient?.id) {
@@ -68,6 +91,28 @@ function ProntuarioModal({ patient, onClose }) {
       setNotes(patient.observations || '')
     }
   }, [patient?.id])
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !patient?.id) return
+    setUploading(true)
+    try {
+      await uploadFile(patient.id, file)
+      const updated = await listFiles(patient.id)
+      setFiles(updated || [])
+    } catch (err) {
+      console.error('Upload erro:', err)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDelete = async (filePath) => {
+    if (!window.confirm('Excluir este arquivo?')) return
+    await deleteFile(filePath)
+    setFiles(prev => prev.filter(f => `${patient.id}/${f.name}` !== filePath))
+  }
 
   const saveNotes = async () => {
     if (!patient?.id) return
@@ -211,9 +256,25 @@ function ProntuarioModal({ patient, onClose }) {
         </div>
 
         {/* Arquivos */}
-        {files.length > 0 && (
-          <div>
-            <h3 className="pront__section-title"><Paperclip size={16} /> Exames e Documentos</h3>
+        <div>
+          <h3 className="pront__section-title"><Paperclip size={16} /> Exames e Documentos</h3>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            onChange={handleUpload}
+            style={{ display: 'none' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="pront__save-btn"
+            style={{ marginBottom: '12px' }}
+          >
+            <Upload size={14} />
+            {uploading ? 'Enviando...' : 'Enviar arquivo'}
+          </button>
+          {files.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {files.map(file => {
                 const filePath = `${patient.id}/${file.name}`
@@ -229,12 +290,23 @@ function ProntuarioModal({ patient, onClose }) {
                     >
                       <Download size={16} />
                     </button>
+                    <button
+                      onClick={() => handleDelete(filePath)}
+                      className="pront__file-download"
+                      title="Excluir"
+                      style={{ color: '#c0392b' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 )
               })}
             </div>
-          </div>
-        )}
+          )}
+          {files.length === 0 && !uploading && (
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhum arquivo enviado</p>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   )
