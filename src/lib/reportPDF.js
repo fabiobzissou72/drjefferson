@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 import { PLAN_TYPES } from './planTypes'
+import { DEFAULT_CONSULTATION_TYPES, getConsultationTypeDetails } from './consultationTypes'
 
 const WEEKDAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
 const MONTHS_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -30,48 +31,55 @@ function formatTimeShort(time) {
 }
 
 function getConsultationInfo(appointment, patient) {
-  if (!patient || !patient.planType) return { label: 'Consulta', number: null, total: null, price: 0, online: false }
+  // Try to get info from patient's plan + consultation dates
+  if (patient?.planType) {
+    const plan = PLAN_TYPES[patient.planType]
+    if (plan) {
+      if (plan.consultations === 1) {
+        const online = plan.id === 'personalizada_online'
+        return { label: online ? 'Consulta Personalizada Online' : 'Consulta Personalizada Presencial', number: 1, total: 1, price: plan.price, online }
+      }
 
-  const plan = PLAN_TYPES[patient.planType]
-  if (!plan) return { label: 'Consulta', number: null, total: null, price: 0, online: false }
+      let consultationNumber = null
+      if (appointment.date === patient.consultation1Date) consultationNumber = 1
+      else if (appointment.date === patient.consultation2Date) consultationNumber = 2
+      else if (appointment.date === patient.consultation3Date) consultationNumber = 3
 
-  if (plan.consultations === 1) {
-    const online = plan.id === 'personalizada_online'
-    return { label: online ? 'Consulta Personalizada Online' : 'Consulta Personalizada Presencial', number: 1, total: 1, price: plan.price, online }
+      let online = false
+      if (plan.id === 'trimestral_misto') {
+        const order = consultationNumber || 2 // assume online for misto if unknown
+        const consultType = plan.consultationTypes.find(c => c.order === order)
+        online = consultType?.mode === 'online'
+      }
+
+      const planLabel = plan.id === 'trimestral_misto' ? 'Plano Trimestral Misto' : 'Plano Trimestral Presencial'
+      return { label: planLabel, number: consultationNumber, total: 3, price: 0, online }
+    }
   }
 
-  let consultationNumber = null
-  if (appointment.date === patient.consultation1Date) consultationNumber = 1
-  else if (appointment.date === patient.consultation2Date) consultationNumber = 2
-  else if (appointment.date === patient.consultation3Date) consultationNumber = 3
-
-  let online = false
-  if (plan.id === 'trimestral_misto' && consultationNumber) {
-    const consultType = plan.consultationTypes.find(c => c.order === consultationNumber)
-    online = consultType?.mode === 'online'
-  }
-
-  const planLabel = plan.id === 'trimestral_misto' ? 'Plano Trimestral Misto' : 'Plano Trimestral Presencial'
-  return { label: planLabel, number: consultationNumber, total: 3, price: 0, online }
+  // Fallback: use appointment type label
+  const aptType = getConsultationTypeDetails(appointment.type, DEFAULT_CONSULTATION_TYPES)
+  const online = aptType.mode === 'online'
+  return { label: aptType.label || 'Consulta', number: null, total: null, price: aptType.price || 0, online }
 }
 
 function buildPlanLines(info) {
   const numStr = info.number && info.total ? ` ${info.number}/${info.total}` : ''
+  const label = info.label || ''
 
-  if (info.label === 'Plano Trimestral Presencial') {
-    return ['Plano Trimestral', `Presencial${numStr}`]
-  }
-  if (info.label === 'Plano Trimestral Misto') {
+  if (label.includes('Trimestral') && (label.includes('Misto') || label.includes('misto'))) {
     const lines = ['Plano Trimestral', `Misto${numStr}`]
     if (info.online) lines.push('(online)')
     return lines
   }
-  // Personalizada — single or two lines
-  if (info.label.startsWith('Consulta Personalizada')) {
-    const mode = info.online ? 'Online' : 'Presencial'
-    return [`Consulta Personalizada`, mode + numStr]
+  if (label.includes('Trimestral') && (label.includes('Presencial') || label.includes('presencial'))) {
+    return ['Plano Trimestral', `Presencial${numStr}`]
   }
-  return [info.label + numStr]
+  if (label.includes('Personalizada')) {
+    const mode = info.online ? 'Online' : 'Presencial'
+    return ['Consulta Personalizada', mode + numStr]
+  }
+  return [label + numStr]
 }
 
 function getCityFromAppointmentOrPatient(appointment, patient) {
