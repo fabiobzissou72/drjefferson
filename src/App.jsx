@@ -271,49 +271,43 @@ function App() {
     return payload
   }, [adminToken, isPatientPortalRoute, logoutAdmin])
 
-  const refreshPatients = useCallback(async (tokenOverride = '') => {
+  const refreshPatients = useCallback(async () => {
     let patients = []
 
-    const useSupabase = useLocalAdminMode || tokenOverride.startsWith('eyJ')
-    if (useSupabase) {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       const payload = await supabaseFetch('patients?select=*&order=created_at.desc')
       patients = Array.isArray(payload) ? payload.map(normalizeApiPatient) : []
     } else {
       try {
-        const payload = await apiFetch('patients?page=1&pageSize=1000', {}, tokenOverride)
+        const payload = await apiFetch('patients?page=1&pageSize=1000', {})
         patients = Array.isArray(payload?.data) ? payload.data.map(normalizeApiPatient) : []
       } catch (error) {
-        console.warn('Falling back to Supabase patients:', error)
-        const payload = await supabaseFetch('patients?select=*&order=created_at.desc')
-        patients = Array.isArray(payload) ? payload.map(normalizeApiPatient) : []
+        console.warn('Erro ao buscar pacientes:', error)
       }
     }
 
     dispatch({ type: 'SET_PATIENTS', payload: patients })
     return patients
-  }, [apiFetch, useLocalAdminMode])
+  }, [apiFetch])
 
-  const refreshAppointments = useCallback(async (tokenOverride = '') => {
+  const refreshAppointments = useCallback(async () => {
     let appointments = []
 
-    const useSupabase = useLocalAdminMode || tokenOverride.startsWith('eyJ')
-    if (useSupabase) {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       const payload = await supabaseFetch('appointments?select=*&order=date.asc,time.asc')
       appointments = Array.isArray(payload) ? payload.map(normalizeApiAppointment) : []
     } else {
       try {
-        const payload = await apiFetch('appointments', {}, tokenOverride)
+        const payload = await apiFetch('appointments', {})
         appointments = Array.isArray(payload?.data) ? payload.data.map(normalizeApiAppointment) : []
       } catch (error) {
-        console.warn('Falling back to Supabase appointments:', error)
-        const payload = await supabaseFetch('appointments?select=*&order=date.asc,time.asc')
-        appointments = Array.isArray(payload) ? payload.map(normalizeApiAppointment) : []
+        console.warn('Erro ao buscar consultas:', error)
       }
     }
 
     dispatch({ type: 'SET_APPOINTMENTS', payload: appointments })
     return appointments
-  }, [apiFetch, useLocalAdminMode])
+  }, [apiFetch])
 
   const refreshConsultationTypes = useCallback(async () => {
     dispatch({ type: 'SET_CONSULTATION_TYPES', payload: DEFAULT_CONSULTATION_TYPES })
@@ -493,7 +487,7 @@ function App() {
           setAdminToken(sessionToken)
           setAdminUser(sessionAdmin)
           setAdminTokenDetails(null)
-          await Promise.all([refreshPatients(sessionToken), refreshAppointments(sessionToken), refreshConsultationTypes()])
+          await Promise.all([refreshPatients(), refreshAppointments(), refreshConsultationTypes()])
           return
         }
         // If it's not the local fallback email, show Supabase error directly
