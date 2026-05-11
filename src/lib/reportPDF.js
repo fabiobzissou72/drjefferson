@@ -22,43 +22,60 @@ function formatBirthDate(birthDate) {
   return `${day}/${month}/${year}`
 }
 
+function formatTimeShort(time) {
+  if (!time) return ''
+  const [h, m] = time.slice(0, 5).split(':')
+  const min = parseInt(m)
+  return min > 0 ? `${parseInt(h)}h${String(min).padStart(2, '0')}` : `${parseInt(h)}h`
+}
+
 function getConsultationInfo(appointment, patient) {
-  if (!patient || !patient.planType) return { label: 'Consulta', number: null, total: null, price: 0 }
+  if (!patient || !patient.planType) return { label: 'Consulta', number: null, total: null, price: 0, online: false }
 
   const plan = PLAN_TYPES[patient.planType]
-  if (!plan) return { label: 'Consulta', number: null, total: null, price: 0 }
+  if (!plan) return { label: 'Consulta', number: null, total: null, price: 0, online: false }
 
-  // Avulsa (1 consulta)
   if (plan.consultations === 1) {
-    const mode = plan.id === 'personalizada_online' ? 'Online' : 'Presencial'
-    return { label: `Consulta Personalizada ${mode}`, number: 1, total: 1, price: plan.price }
+    const online = plan.id === 'personalizada_online'
+    return { label: online ? 'Consulta Personalizada Online' : 'Consulta Personalizada Presencial', number: 1, total: 1, price: plan.price, online }
   }
 
-  // Plano trimestral — determina qual consulta pela data
   let consultationNumber = null
   if (appointment.date === patient.consultation1Date) consultationNumber = 1
   else if (appointment.date === patient.consultation2Date) consultationNumber = 2
   else if (appointment.date === patient.consultation3Date) consultationNumber = 3
 
-  const planLabel = plan.id === 'trimestral_misto' ? 'Plano Trimestral Misto' : 'Plano Trimestral Presencial'
-
-  // Determina se esta consulta específica é online (para Misto)
-  let modeLabel = ''
+  let online = false
   if (plan.id === 'trimestral_misto' && consultationNumber) {
     const consultType = plan.consultationTypes.find(c => c.order === consultationNumber)
-    if (consultType?.mode === 'online') modeLabel = ' (online)'
+    online = consultType?.mode === 'online'
   }
 
-  return {
-    label: `${planLabel}${modeLabel}`,
-    number: consultationNumber,
-    total: 3,
-    price: 0 // plano já pago
+  const planLabel = plan.id === 'trimestral_misto' ? 'Plano Trimestral Misto' : 'Plano Trimestral Presencial'
+  return { label: planLabel, number: consultationNumber, total: 3, price: 0, online }
+}
+
+function buildPlanLines(info) {
+  const numStr = info.number && info.total ? ` ${info.number}/${info.total}` : ''
+
+  if (info.label === 'Plano Trimestral Presencial') {
+    return ['Plano Trimestral', `Presencial${numStr}`]
   }
+  if (info.label === 'Plano Trimestral Misto') {
+    const lines = ['Plano Trimestral', `Misto${numStr}`]
+    if (info.online) lines.push('(online)')
+    return lines
+  }
+  // Personalizada — single or two lines
+  if (info.label.startsWith('Consulta Personalizada')) {
+    const mode = info.online ? 'Online' : 'Presencial'
+    return [`Consulta Personalizada`, mode + numStr]
+  }
+  return [info.label + numStr]
 }
 
 function getCityFromAppointmentOrPatient(appointment, patient) {
-  // Tenta extrair cidade das notas do agendamento
+  if (appointment.city) return appointment.city
   if (appointment.notes) {
     const match = appointment.notes.match(/\[CIDADE:([^\]]+)\]/)
     if (match) return match[1]
@@ -72,123 +89,151 @@ export function generateDailyReport(dateStr, appointments, getPatient) {
 
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 20
-  const colW = pageW - margin * 2
+  const contentW = pageW - margin * 2
+
+  const COL_TIME = 22
+  const COL_TOTAL = 58
+  const COL_PATIENT = contentW - COL_TIME - COL_TOTAL
 
   // --- HEADER ---
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(18)
-  doc.setTextColor(0, 120, 0)
-  doc.text(`ATENDIMENTOS ${dateInfo.month.toUpperCase()} ${dateInfo.year}`, pageW / 2, 22, { align: 'center' })
+  const GREEN = [50, 200, 50]
+  const BLACK = [0, 0, 0]
+  const RED = [220, 0, 0]
 
-  // Determina cidade predominante dos agendamentos
+  // Row 1: ATENDIMENTOS MES ANO
+  doc.setFillColor(...GREEN)
+  doc.rect(margin, 12, contentW, 9, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(15)
+  doc.setTextColor(...BLACK)
+  doc.text(`ATENDIMENTOS ${dateInfo.month.toUpperCase()} ${dateInfo.year}`, pageW / 2, 19, { align: 'center' })
+
+  // Row 2: CITY
   let cityLabel = ''
   for (const apt of appointments) {
     const patient = getPatient(apt.patient_id)
     const city = getCityFromAppointmentOrPatient(apt, patient)
     if (city) { cityLabel = `${city.toUpperCase()}-PI`; break }
   }
-  if (cityLabel) {
-    doc.setFontSize(16)
-    doc.text(cityLabel, pageW / 2, 31, { align: 'center' })
-  }
+  doc.setFillColor(...GREEN)
+  doc.rect(margin, 22, contentW, 9, 'F')
+  doc.setFontSize(13)
+  doc.text(cityLabel || '', pageW / 2, 29, { align: 'center' })
 
-  doc.setFontSize(14)
-  doc.setTextColor(0, 0, 0)
-  doc.text(`DATA: ${dateInfo.short} (${dateInfo.weekday})`, pageW / 2, 40, { align: 'center' })
+  // Row 3: DATE
+  doc.setFillColor(...GREEN)
+  doc.rect(margin, 32, contentW, 9, 'F')
+  doc.setFontSize(12)
+  doc.text(`DATA: ${dateInfo.short} (${dateInfo.weekday})`, pageW / 2, 39, { align: 'center' })
 
-  // Linha separadora
-  doc.setDrawColor(0, 0, 0)
-  doc.setLineWidth(0.5)
-  doc.line(margin, 45, pageW - margin, 45)
+  // Group by period
+  const manha = appointments.filter(a => { const h = parseInt(a.time?.split(':')[0] || 0); return h >= 6 && h < 12 })
+  const tarde = appointments.filter(a => { const h = parseInt(a.time?.split(':')[0] || 0); return h >= 12 && h < 18 })
+  const noite = appointments.filter(a => { const h = parseInt(a.time?.split(':')[0] || 0); return h >= 18 || h < 6 })
 
-  // Período (Manhã/Tarde/Noite)
-  // Agrupamos por período
-  const manha = appointments.filter(a => {
-    const h = parseInt(a.time?.split(':')[0] || 0)
-    return h >= 6 && h < 12
-  })
-  const tarde = appointments.filter(a => {
-    const h = parseInt(a.time?.split(':')[0] || 0)
-    return h >= 12 && h < 18
-  })
-  const noite = appointments.filter(a => {
-    const h = parseInt(a.time?.split(':')[0] || 0)
-    return h >= 18 || h < 6
-  })
-
-  let yPos = 52
+  let yPos = 46
   let totalDia = 0
+
+  const PERIOD_H = 8
+  const THEAD_H = 8
+  const ROW_H = 20
 
   const renderPeriod = (label, list) => {
     if (list.length === 0) return
 
-    // Cabeçalho do período
-    doc.setFillColor(240, 240, 240)
-    doc.rect(margin, yPos - 5, colW, 8, 'F')
+    // Period header — bordered box, red text
+    doc.setDrawColor(...BLACK)
+    doc.setLineWidth(0.5)
+    doc.rect(margin, yPos, contentW, PERIOD_H, 'S')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(12)
-    doc.setTextColor(0, 0, 0)
-    doc.text(label, pageW / 2, yPos, { align: 'center' })
-    yPos += 8
+    doc.setTextColor(...RED)
+    doc.text(label, pageW / 2, yPos + PERIOD_H - 1.5, { align: 'center' })
+    yPos += PERIOD_H
 
-    // Cabeçalho da tabela
-    doc.setFillColor(230, 230, 230)
-    doc.rect(margin, yPos - 5, colW, 8, 'F')
-    doc.setFontSize(10)
-    doc.text('HORÁRIO', margin + 2, yPos)
-    doc.text('PACIENTE', margin + 35, yPos)
-    doc.text('TOTAL', pageW - margin - 2, yPos, { align: 'right' })
+    // Table outer border (will grow as rows are added)
+    const tableStartY = yPos
+
+    // Column header row
+    doc.setFillColor(220, 220, 220)
+    doc.rect(margin, yPos, contentW, THEAD_H, 'F')
+    doc.setDrawColor(...BLACK)
     doc.setLineWidth(0.3)
-    doc.line(margin, yPos + 2, pageW - margin, yPos + 2)
-    yPos += 8
+    doc.rect(margin, yPos, contentW, THEAD_H, 'S')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(...BLACK)
+    doc.text('HORÁRIO', margin + COL_TIME / 2, yPos + 5.5, { align: 'center' })
+    doc.text('PACIENTE', margin + COL_TIME + COL_PATIENT / 2, yPos + 5.5, { align: 'center' })
+    doc.text('TOTAL', margin + COL_TIME + COL_PATIENT + COL_TOTAL / 2, yPos + 5.5, { align: 'center' })
+    // Vertical lines in header
+    doc.line(margin + COL_TIME, yPos, margin + COL_TIME, yPos + THEAD_H)
+    doc.line(margin + COL_TIME + COL_PATIENT, yPos, margin + COL_TIME + COL_PATIENT, yPos + THEAD_H)
+    yPos += THEAD_H
 
-    list.forEach((apt, idx) => {
+    list.forEach((apt) => {
       const patient = getPatient(apt.patient_id)
       const info = getConsultationInfo(apt, patient)
       const birthDate = formatBirthDate(patient?.birthDate || patient?.birth_date)
-      const numberStr = info.number && info.total ? ` ${info.number}/${info.total}` : ''
-      const consultLabel = `${info.label}${numberStr}`
-      const priceStr = info.price > 0
-        ? info.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        : ''
+      const timeStr = formatTimeShort(apt.time)
+      const planLines = buildPlanLines(info)
 
       totalDia += info.price
 
-      // Linha alternada
-      if (idx % 2 === 0) {
-        doc.setFillColor(252, 252, 252)
-        doc.rect(margin, yPos - 5, colW, 16, 'F')
-      }
+      // Row background
+      doc.setFillColor(255, 255, 255)
+      doc.rect(margin, yPos, contentW, ROW_H, 'F')
 
+      // Row border
+      doc.setDrawColor(180, 180, 180)
+      doc.setLineWidth(0.2)
+      doc.rect(margin, yPos, contentW, ROW_H, 'S')
+
+      // Column separators
+      doc.setDrawColor(180, 180, 180)
+      doc.line(margin + COL_TIME, yPos, margin + COL_TIME, yPos + ROW_H)
+      doc.line(margin + COL_TIME + COL_PATIENT, yPos, margin + COL_TIME + COL_PATIENT, yPos + ROW_H)
+
+      // Time — RED bold, vertically centered
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.setTextColor(0, 0, 0)
-      doc.text(apt.time?.slice(0, 5) || '', margin + 2, yPos)
+      doc.setFontSize(12)
+      doc.setTextColor(...RED)
+      doc.text(timeStr, margin + COL_TIME / 2, yPos + ROW_H / 2 + 1.5, { align: 'center' })
 
+      // Patient name — bold black, centered
+      const patientCenterX = margin + COL_TIME + COL_PATIENT / 2
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(10)
-      doc.text(patient?.name || 'Paciente', margin + 35, yPos)
+      doc.setTextColor(...BLACK)
+      const nameY = birthDate ? yPos + 8 : yPos + ROW_H / 2 + 1.5
+      doc.text(patient?.name || 'Paciente', patientCenterX, nameY, { align: 'center', maxWidth: COL_PATIENT - 4 })
 
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9)
-      doc.setTextColor(80, 80, 80)
-      if (birthDate) doc.text(birthDate, margin + 35, yPos + 5)
-      doc.text(consultLabel, margin + 35, yPos + 10)
-
-      if (priceStr) {
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(10)
-        doc.setTextColor(0, 100, 0)
-        doc.text(priceStr, pageW - margin - 2, yPos + 5, { align: 'right' })
+      // Birth date — smaller normal
+      if (birthDate) {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(60, 60, 60)
+        doc.text(birthDate, patientCenterX, yPos + 14, { align: 'center' })
       }
 
-      doc.setDrawColor(220, 220, 220)
-      doc.setLineWidth(0.2)
-      doc.line(margin, yPos + 13, pageW - margin, yPos + 13)
-      yPos += 16
+      // Plan info in TOTAL column — centered, multi-line
+      if (planLines.length > 0) {
+        const totalCenterX = margin + COL_TIME + COL_PATIENT + COL_TOTAL / 2
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(...BLACK)
+        const lineH = 5
+        const blockH = planLines.length * lineH
+        const startY = yPos + (ROW_H - blockH) / 2 + lineH - 1
+        planLines.forEach((line, i) => {
+          doc.text(line, totalCenterX, startY + i * lineH, { align: 'center' })
+        })
+      }
+
+      yPos += ROW_H
     })
 
-    yPos += 4
+    yPos += 6
   }
 
   renderPeriod('Manhã', manha)
@@ -196,14 +241,14 @@ export function generateDailyReport(dateStr, appointments, getPatient) {
   renderPeriod('Noite', noite)
 
   // TOTAL GERAL
-  yPos += 4
+  yPos += 2
   doc.setFillColor(255, 255, 0)
-  doc.rect(margin, yPos - 6, colW, 10, 'F')
+  doc.rect(margin, yPos, contentW, 10, 'F')
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.setTextColor(200, 0, 0)
+  doc.setFontSize(14)
+  doc.setTextColor(...RED)
   const totalStr = `TOTAL=${totalDia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-  doc.text(totalStr, pageW / 2, yPos, { align: 'center' })
+  doc.text(totalStr, pageW / 2, yPos + 7, { align: 'center' })
 
   const filename = `atendimentos_${dateStr}.pdf`
   doc.save(filename)
