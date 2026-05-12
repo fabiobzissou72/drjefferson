@@ -62,7 +62,7 @@ function Dashboard() {
             borderColor: theme === 'light' ? '#94a3b8' : '#64748b',
             textColor: theme === 'light' ? '#0f172a' : '#ffffff'
           }
-        : getAppointmentCalendarColors(appointment.status, theme)
+        : getAppointmentCalendarColors(appointment.status, theme, appointment.date)
 
       return {
         id: appointment.id,

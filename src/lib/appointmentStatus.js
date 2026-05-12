@@ -21,7 +21,18 @@ export const toDatabaseAppointmentStatus = (status) => {
   return status
 }
 
-export const getAppointmentCalendarColors = (status, theme = 'dark') => {
+export const getAppointmentCalendarColors = (status, theme = 'dark', date = '') => {
+  const today = new Date().toISOString().split('T')[0]
+  const isPastPending = status === 'pending' && date && date < today
+
+  if (isPastPending) {
+    return {
+      backgroundColor: theme === 'light' ? '#e5e7eb' : '#4b5563',
+      borderColor: theme === 'light' ? '#9ca3af' : '#6b7280',
+      textColor: theme === 'light' ? '#374151' : '#d1d5db'
+    }
+  }
+
   const normalizedStatus = getAppointmentStatus(status)
 
   if (theme === 'light') {
