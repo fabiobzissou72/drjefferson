@@ -72,6 +72,7 @@ function appReducer(state, action) {
 
 const normalizeApiPatient = (patient) => ({
   ...patient,
+  name: patient.name || patient.nome || '',
   birthDate: patient.birthDate || patient.birth_date || '',
   email: patient.email || '',
   notes: patient.notes || '',

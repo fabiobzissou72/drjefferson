@@ -1,6 +1,5 @@
-const normalizeText = (value = '') =>
-  value
-    .toString()
+const normalizeText = (value) =>
+  String(value == null ? '' : value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()

@@ -145,7 +145,7 @@ function PatientList() {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div className="patient-avatar" style={{ flexShrink: 0 }}>
-                            {patient.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                            {(patient.name || '?').split(' ').filter(n => n).map(n => n[0]).slice(0, 2).join('') || '?'}
                           </div>
                           <div style={{ overflow: 'hidden' }}>
                             <div className="patient-name" style={{ fontSize: '14px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
